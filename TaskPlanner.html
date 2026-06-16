@@ -1,0 +1,2385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Work Task Planner</title>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a202c;min-height:100vh}
+.app{display:flex;flex-direction:column;min-height:100vh}
+.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:12px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+.header h1{font-size:19px;font-weight:700}
+.header-date{font-size:12px;opacity:.8}
+.header-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.header-badge{background:rgba(255,255,255,.2);border-radius:20px;padding:4px 10px;font-size:12px;display:flex;align-items:center;gap:5px}
+.gmail-status{background:rgba(72,187,120,.3);border:1px solid rgba(72,187,120,.5)}
+.nav{background:white;border-bottom:1px solid #e2e8f0;display:flex;gap:2px;padding:0 24px;overflow-x:auto}
+.nav-btn{padding:11px 16px;font-size:13px;font-weight:500;border:none;background:none;cursor:pointer;color:#718096;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap}
+.nav-btn.active{color:#667eea;border-bottom-color:#667eea}
+.nav-btn:hover:not(.active){color:#4a5568}
+.main{flex:1;padding:20px;max-width:1100px;margin:0 auto;width:100%}
+.card{background:white;border-radius:12px;padding:18px;box-shadow:0 1px 4px rgba(0,0,0,.08);margin-bottom:14px}
+.card-title{font-size:14px;font-weight:600;color:#2d3748;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.task-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-radius:8px;border:1px solid #e2e8f0;margin-bottom:8px;transition:all .15s;background:white}
+.task-item:hover{border-color:#c3dafe;box-shadow:0 2px 6px rgba(102,126,234,.1)}
+.task-item.done{opacity:.5}
+.task-item.done .task-title{text-decoration:line-through;color:#a0aec0}
+.task-check{width:18px;height:18px;border-radius:50%;border:2px solid #cbd5e0;cursor:pointer;flex-shrink:0;margin-top:2px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.task-check.checked{background:#48bb78;border-color:#48bb78}
+.task-check.checked::after{content:'checkmark';color:white;font-size:10px;font-weight:700;content:'\2713'}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:14px;font-weight:500;color:#2d3748;line-height:1.4}
+.task-meta{display:flex;gap:6px;margin-top:4px;flex-wrap:wrap;align-items:center}
+.badge{display:inline-flex;align-items:center;padding:2px 7px;border-radius:12px;font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.3px}
+.badge-high{background:#fff5f5;color:#c53030}
+.badge-medium{background:#fffbeb;color:#b7791f}
+.badge-low{background:#f0fff4;color:#276749}
+.badge-cat{background:#ebf8ff;color:#2b6cb0}
+.badge-date{background:#f7fafc;color:#718096;font-size:11px}
+.badge-overdue{background:#fff5f5;color:#c53030}
+.task-actions{display:flex;gap:6px;flex-shrink:0}
+.icon-btn{width:28px;height:28px;border-radius:6px;border:1px solid #e2e8f0;background:white;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:#718096;transition:all .15s}
+.icon-btn:hover{background:#edf2f7}
+.icon-btn.danger:hover{background:#fff5f5;color:#c53030;border-color:#feb2b2}
+.priority-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px}
+.dot-high{background:#fc8181}.dot-medium{background:#f6ad55}.dot-low{background:#68d391}
+.suggestion-box{background:linear-gradient(135deg,#ebf4ff,#e9d8fd);border:1px solid #c3dafe;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.suggestion-num{width:24px;height:24px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.suggestion-content{flex:1}
+.suggestion-title{font-size:13px;font-weight:600;color:#2d3748}
+.suggestion-reason{font-size:11px;color:#553c9a;margin-top:2px}
+.suggestion-add-btn{padding:3px 10px;background:#667eea;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.suggestion-add-btn:hover{background:#5a67d8}
+.overload-alert{background:linear-gradient(135deg,#fff5f5,#fffbeb);border:1px solid #fc8181;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.overload-alert.mild{background:linear-gradient(135deg,#fffbeb,#fefcbf);border-color:#f6ad55}
+.overload-alert.severe{background:linear-gradient(135deg,#fff5f5,#fed7d7);border-color:#e53e3e;border-width:2px}
+.overload-pct{font-size:20px;font-weight:800;margin-right:6px}
+.allow-reschedule-row{display:flex;align-items:center;gap:8px;padding:4px 0;font-size:12px;color:#4a5568;border-bottom:1px dashed #e2e8f0}
+.allow-reschedule-row:last-child{border-bottom:none}
+.deadline-box{background:linear-gradient(135deg,#fffbeb,#fefcbf);border:1px solid #f6ad55;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;align-items:flex-start;gap:12px}
+.deadline-num{width:24px;height:24px;background:#ed8936;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+.overload-title{font-size:13px;font-weight:700;color:#c53030;margin-bottom:5px}
+.overload-item{font-size:12px;color:#744210;padding:3px 0;border-bottom:1px dashed #fbd38d}
+.overload-item:last-child{border-bottom:none}
+.reschedule-btn{margin-top:8px;padding:5px 12px;background:#ed8936;color:white;border:none;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer}
+.progress-bar{height:6px;background:#e2e8f0;border-radius:3px;overflow:hidden}
+.progress-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#667eea,#764ba2);transition:width .4s}
+.progress-text{font-size:12px;color:#718096;margin-top:3px}
+.week-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+.day-col{background:white;border-radius:10px;padding:10px;border:1px solid #e2e8f0;min-height:110px}
+.day-col.today{border-color:#667eea;box-shadow:0 0 0 2px rgba(102,126,234,.2)}
+.day-header{font-size:11px;font-weight:700;color:#4a5568;text-transform:uppercase;letter-spacing:.5px}
+.day-date{font-size:17px;font-weight:700;color:#2d3748;margin:2px 0 6px;position:relative}
+.day-col.today .day-date{color:#667eea}
+.day-row-header{display:none;align-items:center;gap:8px;margin-bottom:8px}
+.day-row-name{font-size:12px;font-weight:800;color:#4a5568;text-transform:uppercase;letter-spacing:.5px;width:36px}
+.day-row-num{font-size:18px;font-weight:800;color:#2d3748}
+.day-col.today .day-row-num{color:#667eea}
+@media(max-width:700px){
+  .week-grid{grid-template-columns:1fr!important}
+  .day-col{min-height:unset}
+  .day-header,.day-date{display:none}
+  .day-row-header{display:flex}
+}
+.day-task-mini{font-size:11px;padding:2px 6px;border-radius:4px;margin-bottom:2px;border-left:2px solid;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+.mini-high{background:#fff5f5;border-color:#fc8181;color:#742a2a}
+.mini-medium{background:#fffbeb;border-color:#f6ad55;color:#744210}
+.mini-low{background:#f0fff4;border-color:#68d391;color:#1c4532}
+.mini-done{opacity:.4;text-decoration:line-through}
+.add-to-day-btn{width:100%;padding:3px;border:1px dashed #cbd5e0;border-radius:4px;background:none;cursor:pointer;color:#a0aec0;font-size:11px;margin-top:3px}
+.add-to-day-btn:hover{border-color:#667eea;color:#667eea;background:#ebf4ff}
+.gantt-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:12px}
+.gantt-label{width:160px;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600;color:#2d3748}
+.gantt-track{flex:1;background:#f0f4ff;border-radius:6px;height:22px;position:relative;overflow:hidden}
+.gantt-bar{height:100%;border-radius:6px;position:absolute;display:flex;align-items:center;padding-left:6px;font-size:10px;font-weight:700;color:white;white-space:nowrap;overflow:hidden;min-width:4px;transition:width .3s}
+.gantt-today{position:absolute;top:0;bottom:0;width:2px;background:#667eea;opacity:.7;z-index:2}
+.gantt-due{width:6px;height:6px;border-radius:50%;background:white;border:2px solid currentColor;position:absolute;top:50%;transform:translateY(-50%);z-index:3}
+.gantt-axis{display:flex;font-size:10px;color:#a0aec0;margin-bottom:4px;position:relative;padding-left:168px}
+.week-tf-hdr{font-size:9px;font-weight:800;text-transform:uppercase;letter-spacing:.5px;color:#a0aec0;margin:5px 0 2px;padding-top:4px;border-top:1px solid #f0f0f0}
+.week-tf-hdr:first-child{border-top:none;margin-top:0}
+.stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px}
+.stat-card{background:white;border-radius:10px;padding:14px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,.07)}
+.stat-num{font-size:26px;font-weight:800;color:#667eea}
+.stat-label{font-size:11px;color:#718096;margin-top:2px;font-weight:500}
+.io-bar{display:flex;gap:8px;margin-bottom:14px;align-items:center;flex-wrap:wrap}
+.btn{padding:7px 16px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:#667eea;color:white}
+.btn-primary:hover{background:#5a67d8}
+.btn-secondary{background:#edf2f7;color:#4a5568}
+.btn-secondary:hover{background:#e2e8f0}
+.btn-sm{padding:5px 12px;font-size:12px}
+.btn-gmail{background:white;border:1.5px solid #e2e8f0;color:#2d3748;display:inline-flex;align-items:center;gap:6px}
+.btn-gmail:hover{border-color:#667eea;color:#667eea}
+.btn-gmail.connected{border-color:#48bb78;color:#276749;background:#f0fff4}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;z-index:1000;padding:16px}
+.modal{background:white;border-radius:14px;padding:22px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.2);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:17px;font-weight:700;color:#2d3748;margin-bottom:16px}
+.form-group{margin-bottom:12px}
+.form-label{display:block;font-size:11px;font-weight:700;color:#4a5568;margin-bottom:4px;text-transform:uppercase;letter-spacing:.4px}
+.form-input{width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;color:#2d3748;outline:none;transition:border .15s;background:white}
+.form-input:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,.1)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.form-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.quick-dates{display:flex;gap:4px;margin-top:5px;flex-wrap:wrap}
+.quick-date-btn{padding:3px 9px;border-radius:12px;border:1px solid #e2e8f0;background:white;font-size:11px;font-weight:600;color:#667eea;cursor:pointer;transition:all .15s}
+.quick-date-btn:hover{background:#667eea;color:white;border-color:#667eea}
+.email-card{background:white;border-radius:10px;border:1px solid #e2e8f0;padding:12px 14px;margin-bottom:8px;transition:all .15s}
+.email-card:hover{border-color:#c3dafe;box-shadow:0 2px 6px rgba(102,126,234,.1)}
+.email-card.task-created-card{opacity:.6}
+.email-from{font-size:11px;color:#718096;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.email-subject{font-size:13px;font-weight:600;color:#2d3748;margin:3px 0}
+.email-snippet{font-size:12px;color:#a0aec0;line-height:1.5}
+.email-actions{display:flex;gap:6px;margin-top:8px;align-items:center;flex-wrap:wrap}
+.email-section{margin-bottom:20px}
+.email-section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;padding-bottom:8px;border-bottom:2px solid #e2e8f0}
+.email-section-title{font-size:14px;font-weight:700;color:#2d3748;display:flex;align-items:center;gap:8px}
+.email-count-badge{background:#667eea;color:white;border-radius:12px;padding:1px 8px;font-size:11px;font-weight:700}
+.sync-bar{background:white;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px;border:1px solid #e2e8f0;flex-wrap:wrap}
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.sync-dot.idle{background:#48bb78}
+.sync-dot.syncing{background:#667eea;animation:pulse 1s infinite}
+.sync-dot.error{background:#fc8181}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.sync-time-chip{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:600;background:#f7fafc;border:1px solid #e2e8f0;color:#718096}
+.sync-time-chip.past{background:#f0fff4;color:#276749;border-color:#9ae6b4}
+.alerts-container{position:fixed;top:10px;right:10px;z-index:3000;display:flex;flex-direction:column;gap:8px;max-width:360px;pointer-events:none}
+.alert-banner{border-radius:10px;padding:12px 14px;display:flex;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,.15);animation:slideIn .3s ease;border:1px solid;pointer-events:all}
+.alert-banner.urgent{background:#fff5f5;border-color:#fc8181}
+.alert-banner.jira{background:#ebf8ff;border-color:#90cdf4}
+.alert-banner.suggestion{background:linear-gradient(135deg,#ebf4ff,#e9d8fd);border-color:#c3dafe}
+.alert-banner.info{background:#f0fff4;border-color:#9ae6b4}
+.alert-banner.calendar{background:#ebf4ff;border-color:#90cdf4}
+.cal-status{background:rgba(56,178,172,.3);border:1px solid rgba(56,178,172,.5)}
+.badge-cal{background:#e6fffa;color:#234e52}
+.cal-event-strip{font-size:11px;padding:2px 7px;border-radius:4px;background:#ebf4ff;color:#2b6cb0;border-left:2px solid #667eea;margin-bottom:2px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cal-ooo-strip{background:#fff5f5;color:#c53030;border-left-color:#fc8181}
+.cal-section{margin-bottom:16px}
+.cal-connect-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid #e2e8f0;margin-top:10px;flex-wrap:wrap}
+.cal-event-card{background:white;border-radius:8px;border:1px solid #c3dafe;padding:10px 12px;margin-bottom:6px;display:flex;gap:10px;align-items:flex-start}
+.cal-time-badge{font-size:11px;font-weight:700;color:#2b6cb0;background:#ebf4ff;padding:2px 7px;border-radius:8px;white-space:nowrap;flex-shrink:0}
+@keyframes slideIn{from{transform:translateX(100%);opacity:0}to{transform:translateX(0);opacity:1}}
+.alert-icon{font-size:18px;flex-shrink:0}
+.alert-body{flex:1}
+.alert-title{font-size:13px;font-weight:700;color:#2d3748}
+.alert-text{font-size:12px;color:#718096;margin-top:2px;line-height:1.4}
+.alert-close{cursor:pointer;font-size:16px;color:#a0aec0;background:none;border:none;padding:0;flex-shrink:0}
+.gmail-connect-box{text-align:center;padding:48px 24px}
+.gmail-icon-big{font-size:52px;margin-bottom:12px}
+.connect-desc{font-size:13px;color:#718096;line-height:1.7;margin-bottom:20px;max-width:400px;margin-left:auto;margin-right:auto}
+.setup-guide{background:#f7fafc;border-radius:8px;padding:14px;margin-bottom:14px;border:1px solid #e2e8f0}
+.setup-guide-title{font-size:11px;font-weight:700;color:#4a5568;margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px}
+.setup-step{display:flex;gap:10px;margin-bottom:8px;font-size:12px;color:#4a5568;align-items:flex-start}
+.step-num{width:18px;height:18px;background:#667eea;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;flex-shrink:0;margin-top:1px}
+.code-block{background:#2d3748;color:#e2e8f0;padding:5px 9px;border-radius:5px;font-family:monospace;font-size:11px;margin-top:4px;word-break:break-all}
+.warning-box{background:#fffbeb;border:1px solid #f6ad55;border-radius:7px;padding:10px 12px;font-size:12px;color:#744210;margin-bottom:12px}
+.demo-banner{background:#fffbeb;border:1px solid #f6ad55;border-radius:8px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12px;color:#744210;margin-bottom:14px}
+.tag-email{background:#f0fff4;color:#276749;border:1px solid #9ae6b4;padding:1px 6px;border-radius:10px;font-size:10px;font-weight:700}
+.empty{text-align:center;padding:32px 16px;color:#a0aec0}
+.empty-icon{font-size:36px;margin-bottom:8px}
+.empty-text{font-size:13px}
+.fab{position:fixed;bottom:28px;right:28px;width:50px;height:50px;background:linear-gradient(135deg,#667eea,#764ba2);color:white;border:none;border-radius:50%;font-size:22px;cursor:pointer;box-shadow:0 4px 16px rgba(102,126,234,.45);display:flex;align-items:center;justify-content:center;transition:transform .15s;z-index:100}
+.fab:hover{transform:scale(1.08)}
+.filter-bar{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.filter-chip{padding:4px 11px;border-radius:20px;font-size:11px;font-weight:600;border:1px solid #e2e8f0;background:white;cursor:pointer;color:#718096;transition:all .15s}
+.filter-chip.active{background:#667eea;color:white;border-color:#667eea}
+.section-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.section-title{font-size:15px;font-weight:700;color:#2d3748}
+.divider{height:1px;background:#f0f4f8;margin:12px 0}
+@media(max-width:700px){.stats-grid{grid-template-columns:repeat(2,1fr)}.form-row{grid-template-columns:1fr}.main{padding:12px}.alerts-container{left:10px;right:10px;max-width:none}}
+
+.routine-row{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;background:#f7fafc;border:1px solid #e2e8f0;margin-bottom:7px;transition:box-shadow .15s}
+.routine-row:hover{box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.routine-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.routine-info{flex:1;min-width:0}
+.routine-title-text{font-size:13px;font-weight:600;color:#2d3748;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.routine-meta{font-size:11px;color:#718096;margin-top:2px}
+.routine-badge{display:inline-block;font-size:10px;font-weight:700;padding:1px 6px;border-radius:8px;margin-right:4px}
+.routine-badge.mustdo{background:#fed7d7;color:#c53030}
+.routine-badge.rfreq-daily{background:#c3dafe;color:#3730a3}
+.routine-badge.rfreq-weekly{background:#d9f99d;color:#365314}
+.routine-toggle{width:36px;height:20px;background:#cbd5e0;border-radius:10px;cursor:pointer;position:relative;transition:background .2s;border:none;flex-shrink:0}
+.routine-toggle.on{background:#667eea}
+.routine-toggle::after{content:'';position:absolute;width:16px;height:16px;background:white;border-radius:50%;top:2px;left:2px;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.routine-toggle.on::after{transform:translateX(16px)}
+.day-chip{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;border-radius:50%;font-size:10px;font-weight:700;cursor:pointer;border:1.5px solid #e2e8f0;background:#f7fafc;color:#718096;transition:all .15s;user-select:none}
+.day-chip.selected{background:#667eea;border-color:#667eea;color:white}
+.routine-today-card{background:linear-gradient(135deg,#f0f4ff,#faf5ff);border:1px solid #c3dafe;border-radius:8px;padding:10px 12px;margin-bottom:7px;display:flex;align-items:center;gap:10px}
+
+/* ── Tutorial ──────────────────────────────────────────────────────────────── */
+/* ── Tutorial / Tinder ─────────────────────────────────────────────────────── */
+@keyframes fadeSlideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+@keyframes bounce{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+@keyframes heartPop{0%{transform:scale(0) rotate(-10deg);opacity:0}60%{transform:scale(1.3) rotate(5deg);opacity:1}100%{transform:scale(1) rotate(0);opacity:1}}
+.tut-title{font-size:26px;font-weight:800;color:#2d3748;margin-bottom:8px}
+.tut-sub{font-size:14px;color:#718096;max-width:400px;margin:0 auto 24px;line-height:1.6}
+.tut-choice-row{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:4px}
+.tut-choice{border:2px solid #e2e8f0;border-radius:14px;padding:20px 24px;cursor:pointer;background:white;transition:all .2s;min-width:170px;text-align:center}
+.tut-choice:hover{border-color:#667eea;box-shadow:0 4px 20px rgba(102,126,234,.2);transform:translateY(-3px)}
+.tut-choice-icon{font-size:38px;margin-bottom:8px;display:block}
+.tut-choice-label{font-size:14px;font-weight:700;color:#2d3748;margin-bottom:4px}
+.tut-choice-desc{font-size:11px;color:#718096;line-height:1.4}
+.tinder-scene{display:flex;gap:20px;align-items:flex-start;justify-content:center;padding:4px 0 16px}
+.tinder-left{flex:0 0 260px;display:flex;flex-direction:column;align-items:center}
+.tinder-right{flex:1;min-width:0;max-width:200px}
+.tinder-arena{position:relative;height:490px;width:260px;display:flex;align-items:center;justify-content:center;overflow:visible}
+@media(max-width:600px){.tinder-scene{flex-direction:column;align-items:center}.tinder-right{max-width:100%;width:100%}}
+.tinder-wrap{position:absolute;width:240px;will-change:transform}
+.tinder-c{background:white;border-radius:22px;box-shadow:0 12px 44px rgba(0,0,0,.15);overflow:hidden;position:relative;user-select:none;cursor:grab}
+.tinder-c:active{cursor:grabbing}
+.tinder-c-hero{height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;position:relative}
+.tinder-c-body{padding:16px 16px 14px}
+.tinder-badge{position:absolute;top:16px;border:3px solid;border-radius:8px;padding:3px 10px;font-weight:900;font-size:17px;letter-spacing:1px;pointer-events:none}
+.tinder-badge.like{left:12px;border-color:#48bb78;color:#48bb78;transform:rotate(-12deg)}
+.tinder-badge.nope{right:12px;border-color:#fc8181;color:#fc8181;transform:rotate(12deg)}
+.tinder-actions{display:flex;justify-content:center;align-items:center;gap:20px;margin-top:16px}
+.tinder-btn{width:56px;height:56px;border-radius:50%;border:2.5px solid;cursor:pointer;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 6px 20px rgba(0,0,0,.13);transition:all .18s;background:white}
+.tinder-btn:hover{transform:scale(1.12)}
+.tinder-btn.nope{border-color:#fc8181;color:#fc8181;box-shadow:0 4px 14px rgba(252,129,129,.25)}
+.tinder-btn.nope:hover{background:#fff5f5}
+.tinder-btn.like{border-color:#48bb78;color:#48bb78;box-shadow:0 4px 14px rgba(72,187,120,.25)}
+.tinder-btn.like:hover{background:#f0fff4}
+.tinder-btn-label{font-size:10px;font-weight:700;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px;text-align:center;margin-top:4px}
+.tinder-hearts{display:flex;justify-content:center;gap:6px;margin-bottom:10px;min-height:26px}
+.tinder-heart{font-size:20px;animation:heartPop .35s ease}
+.tinder-hint{text-align:center;font-size:10px;color:#a0aec0;margin-top:8px}
+.swipe-hint-banner{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:10px;padding:8px 16px;background:linear-gradient(135deg,#f0f4ff,#faf5ff);border:1.5px dashed #c4b5fd;border-radius:12px;font-size:12px;font-weight:600;color:#6d28d9;animation:pulse-hint 2s infinite}
+.swipe-arrow{font-size:20px;animation:bounce-lr 1.2s infinite alternate}
+.swipe-arrow.left{animation-direction:alternate-reverse}
+@keyframes pulse-hint{0%,100%{opacity:1}50%{opacity:.65}}
+@keyframes bounce-lr{0%{transform:translateX(0)}100%{transform:translateX(5px)}}
+.deck-list{display:flex;flex-direction:column;gap:5px}
+.deck-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;background:white;border:1.5px solid #e2e8f0;transition:all .2s;opacity:.4;cursor:default}
+.deck-item.active{opacity:1;border-color:#667eea;background:#f0f4ff;box-shadow:0 2px 10px rgba(102,126,234,.18);transform:translateX(3px)}
+.deck-item.liked{opacity:1;border-color:#48bb78;background:#f0fff4}
+.deck-item.skipped{opacity:.2}
+.deck-item-emoji{font-size:18px;width:26px;text-align:center;flex-shrink:0}
+.deck-item-name{font-size:11px;font-weight:600;color:#4a5568;flex:1;line-height:1.2}
+.deck-item-status{font-size:13px;flex-shrink:0}
+.streak-tracker{display:flex;flex-direction:column;gap:3px;background:white;border:1.5px solid #e2e8f0;border-radius:12px;padding:7px 10px;box-shadow:0 2px 8px rgba(0,0,0,.07);align-self:flex-start}
+.streak-row{display:flex;align-items:center;gap:3px}
+.streak-label{font-size:11px;width:18px;text-align:center}
+.streak-dot{width:20px;height:20px;border-radius:50%;border:2px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:800;transition:all .3s}
+.streak-dot.done{background:#48bb78;border-color:#48bb78;color:white}
+.streak-dot.pending{background:#f7f8fb;border-color:#c3dafe;color:#667eea}
+.streak-dot.empty{background:#f7f8fb;border-color:#f0f0f0;color:#e2e8f0}
+.streak-trophy{font-size:14px;margin-left:2px;opacity:.2;transition:opacity .3s;line-height:1}
+.streak-trophy.lit{opacity:1}
+.sugg-complete-btn{padding:3px 9px;background:#48bb78;color:white;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.sugg-complete-btn:hover{background:#38a169}
+.sugg-complete-btn.undo{background:#a0aec0}
+.sugg-complete-btn.undo:hover{background:#718096}
+.timeframe-hdr{display:flex;align-items:center;gap:8px;margin:10px 0 6px;font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.6px;color:#a0aec0}
+.timeframe-hdr::after{content:'';flex:1;height:1px;background:#e2e8f0}
+.streak-panel{border-left:1.5px solid #e2e8f0;padding-left:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;flex-shrink:0;width:110px}
+.streak-panel-row{display:flex;flex-direction:column;align-items:center;gap:6px}
+.streak-panel-label{font-size:10px;font-weight:700;color:#a0aec0;text-transform:uppercase;letter-spacing:.5px}
+.streak-panel-dots{display:flex;gap:5px;align-items:center}
+.sp-dot{width:26px;height:26px;border-radius:50%;border:2.5px solid #e2e8f0;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;transition:all .3s}
+.sp-dot.done{background:#48bb78;border-color:#48bb78;color:white}
+.sp-dot.pending{background:#f7f8fb;border-color:#c3dafe;color:#667eea}
+.sp-dot.empty{background:#f7f8fb;border-color:#f0f0f0;color:#e2e8f0}
+.sp-trophy{font-size:22px;opacity:.18;transition:opacity .4s;margin-top:2px}
+.top3-mirror{display:flex;align-items:center;gap:10px;padding:9px 11px;border:1.5px solid #e2e8f0;border-radius:10px;margin-bottom:7px;background:white;transition:all .2s}
+.top3-mirror.done{background:#f0fff4;border-color:#9ae6b4;opacity:.75}
+.top3-mirror-circle{width:24px;height:24px;border-radius:50%;border:2.5px solid #cbd5e0;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;font-size:11px;font-weight:800;color:#a0aec0}
+.top3-mirror-circle:hover{border-color:#667eea;color:#667eea}
+.top3-mirror-circle.done{background:#48bb78;border-color:#48bb78;color:white}
+.top3-mirror-body{flex:1;min-width:0}
+.top3-mirror-title{font-size:13px;font-weight:600;color:#2d3748;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.top3-mirror-title.done{text-decoration:line-through;color:#a0aec0}
+.top3-mirror-meta{display:flex;align-items:center;gap:6px;margin-top:3px;flex-wrap:wrap}
+.top3-mirror-rank{font-size:9px;font-weight:800;color:#667eea;background:#ebf4ff;border:1px solid #bee3f8;border-radius:4px;padding:1px 5px}
+.sp-trophy.lit{opacity:1}
+.top3-circle{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;cursor:pointer;border:2.5px solid #7c3aed;color:#7c3aed;background:white;flex-shrink:0;margin-top:2px;transition:all .25s;position:relative}
+.top3-circle.done{background:#7c3aed;border-color:#7c3aed;color:white}
+.top3-tag{font-size:9px;font-weight:800;color:#7c3aed;background:#ede9fe;border:1px solid #c4b5fd;border-radius:4px;padding:1px 5px;white-space:nowrap;display:inline-flex;align-items:center}
+.top3-tag.done{color:#276749;background:#f0fff4;border-color:#9ae6b4}
+.task-item.top3-pinned{opacity:1!important}
+.task-item.top3-pinned.done .task-title{text-decoration:line-through;color:#a0aec0}
+.switch-top3-btn{font-size:10px;font-weight:700;color:#667eea;background:#edf2ff;border:1px solid #c3dafe;border-radius:5px;padding:2px 4px;cursor:pointer;white-space:nowrap;line-height:1.4;width:100%;text-align:center}
+.switch-top3-btn:hover{background:#c3dafe}
+.switch-top3-popup{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.s3p-btn{font-size:10px;font-weight:700;padding:2px 8px;border-radius:5px;border:1.5px solid #667eea;color:#667eea;background:white;cursor:pointer}
+.s3p-btn:hover{background:#667eea;color:white}
+.suggestion-box.done-box{opacity:.65}
+.confetti-char{font-size:32px;animation:bounce 1s infinite;display:inline-block}
+.confetti-char:nth-child(2){animation-delay:.15s}
+.confetti-char:nth-child(3){animation-delay:.3s}
+.tut-saved-task{display:flex;align-items:center;gap:10px;padding:10px 14px;border-radius:10px;background:#f0fff4;border:1px solid #9ae6b4;margin-bottom:8px;animation:popIn .3s ease}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useMemo } = React;
+
+const uid = () => Math.random().toString(36).slice(2,10);
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const DAYS_FULL = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmt(d) { const dt=new Date(d+'T00:00:00'); return MONTHS[dt.getMonth()]+' '+dt.getDate(); }
+function fmtFull(d) { const dt=new Date(d+'T00:00:00'); return DAYS_FULL[dt.getDay()]+', '+MONTHS[dt.getMonth()]+' '+dt.getDate()+', '+dt.getFullYear(); }
+function toISO(d) { return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function daysFromNow(n) { const dt=new Date(); dt.setDate(dt.getDate()+n); return toISO(dt); }
+function getWeekDays(base) {
+  const d=new Date(base+'T00:00:00'), day=d.getDay(), sun=new Date(d);
+  sun.setDate(d.getDate()-day);  // rewind to Sunday
+  return Array.from({length:7},(_,i)=>{ const dd=new Date(sun); dd.setDate(sun.getDate()+i); return toISO(dd); });
+}
+function diffDays(date) {
+  const today=new Date(); today.setHours(0,0,0,0);
+  return Math.round((new Date(date+'T00:00:00')-today)/86400000);
+}
+function scoreTask(t) {
+  if(t.status==='done') return -1;
+  const p=t.priority==='high'?30:t.priority==='medium'?20:10;
+  const n=diffDays(t.dueDate);
+  return p+(n<0?50:n===0?40:n===1?30:n===2?20:n<=7?10:0);
+}
+function nowHHMM() { const n=new Date(); return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0'); }
+
+const CATEGORIES = ['Planning','Development','Review','Meeting','Documentation','Research','Deployment','Support','Jira','Routine','Other'];
+
+const SAMPLE_TASKS = [
+  // ── Today ────────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Daily standup - sprint sync',priority:'high',status:'done',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),category:'Meeting',estimatedHours:.5,description:'Share blockers, update board',createdAt:Date.now()-9,fromEmail:false},
+  {id:uid(),title:'Fix critical bug: payment timeout on checkout',priority:'high',status:'in_progress',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),category:'Development',estimatedHours:3,description:'Ticket #4821 - SLA breach risk',createdAt:Date.now()-8,fromEmail:false},
+  {id:uid(),title:'Review PR #237 - auth refactor',priority:'medium',status:'todo',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),category:'Review',estimatedHours:1,description:'Backend team is blocked on merge',createdAt:Date.now()-7,fromEmail:false},
+  {id:uid(),title:'1-on-1 with manager',priority:'medium',status:'todo',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),category:'Meeting',estimatedHours:.5,description:'Discuss Q3 goals & performance review',createdAt:Date.now()-4,fromEmail:false},
+  {id:uid(),title:'Submit expense report - May receipts',priority:'medium',status:'todo',dueDate:daysFromNow(-2),scheduledDate:daysFromNow(0),category:'Other',estimatedHours:.5,description:'Finance deadline was 2 days ago!',createdAt:Date.now()-10,fromEmail:false},
+  {id:uid(),title:'Deep-dive: refactor auth middleware',priority:'high',status:'todo',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),startTime:'10:00',endTime:'12:00',category:'Development',estimatedHours:2,description:'Remove legacy JWT handler, migrate to new SDK',createdAt:Date.now()-6,fromEmail:false},
+  {id:uid(),title:'Prepare demo slides for stakeholders',priority:'medium',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(0),startTime:'13:00',endTime:'14:30',category:'Other',estimatedHours:1.5,description:'3 key flows: onboarding, dashboard, export',createdAt:Date.now()-5,fromEmail:false},
+  {id:uid(),title:'Investigate Sentry errors - prod spike',priority:'high',status:'todo',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),startTime:'15:00',endTime:'16:00',category:'Development',estimatedHours:1,description:'NullPointerException in payment service, 200+ hits',createdAt:Date.now()-4,fromEmail:false},
+  {id:uid(),title:'Update Confluence runbook - deploy process',priority:'low',status:'todo',dueDate:daysFromNow(3),scheduledDate:daysFromNow(0),category:'Documentation',estimatedHours:1,description:'Add rollback steps and health check URLs',createdAt:Date.now()-3,fromEmail:false},
+  // ── Day +1 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Sprint planning - next sprint kickoff',priority:'high',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(1),category:'Planning',estimatedHours:2,description:'Estimate and assign tickets for sprint 24',createdAt:Date.now()-3,fromEmail:false},
+  {id:uid(),title:'Deploy hotfix to staging',priority:'high',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(1),category:'Deployment',estimatedHours:1,description:'Coordinate with DevOps, verify smoke tests',createdAt:Date.now()-3,fromEmail:false},
+  {id:uid(),title:'Update API docs for v2 endpoints',priority:'medium',status:'todo',dueDate:daysFromNow(2),scheduledDate:daysFromNow(1),category:'Documentation',estimatedHours:1.5,description:'Swagger + internal wiki update',createdAt:Date.now()-6,fromEmail:false},
+  {id:uid(),title:'Write unit tests for notification service',priority:'low',status:'todo',dueDate:daysFromNow(4),scheduledDate:daysFromNow(1),category:'Development',estimatedHours:2,description:'Target 80% coverage on service layer',createdAt:Date.now()-5,fromEmail:false},
+  {id:uid(),title:'Kick-off: new analytics pipeline design',priority:'high',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(1),startTime:'10:00',endTime:'11:30',category:'Development',estimatedHours:1.5,description:'Event schema, Kafka topics, data retention policy',createdAt:Date.now()-2,fromEmail:false},
+  {id:uid(),title:'Code review: search indexing PR #251',priority:'medium',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(1),startTime:'14:00',endTime:'15:00',category:'Review',estimatedHours:1,description:'Check Elasticsearch mappings and query performance',createdAt:Date.now()-1,fromEmail:false},
+  {id:uid(),title:'Fix flaky tests in CI - payment module',priority:'high',status:'todo',dueDate:daysFromNow(2),scheduledDate:daysFromNow(1),category:'Development',estimatedHours:1.5,description:'3 tests randomly failing, blocking PRs',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Sync with DevOps on k8s resource limits',priority:'medium',status:'todo',dueDate:daysFromNow(1),scheduledDate:daysFromNow(1),startTime:'16:00',endTime:'16:30',category:'Meeting',estimatedHours:.5,description:'OOM kills on staging last night',createdAt:Date.now(),fromEmail:false},
+  // ── Day +2 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Architecture review - microservices migration',priority:'high',status:'todo',dueDate:daysFromNow(2),scheduledDate:daysFromNow(2),category:'Meeting',estimatedHours:2,description:'Present proposal to tech lead & CTO',createdAt:Date.now()-1,fromEmail:false},
+  {id:uid(),title:'Investigate slow query on reports page',priority:'medium',status:'todo',dueDate:daysFromNow(3),scheduledDate:daysFromNow(2),category:'Research',estimatedHours:2,description:'DB profiling, add index if needed',createdAt:Date.now()-2,fromEmail:false},
+  {id:uid(),title:'Design data model for analytics v2',priority:'medium',status:'todo',dueDate:daysFromNow(5),scheduledDate:daysFromNow(2),category:'Development',estimatedHours:2.5,description:'Define event schema, retention policy',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Team retrospective - sprint 23',priority:'medium',status:'todo',dueDate:daysFromNow(2),scheduledDate:daysFromNow(2),category:'Meeting',estimatedHours:1,description:'What went well, what to improve',createdAt:Date.now()-1,fromEmail:false},
+  // ── Day +3 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Load testing - simulate 10k concurrent users',priority:'high',status:'todo',dueDate:daysFromNow(4),scheduledDate:daysFromNow(3),category:'Research',estimatedHours:2.5,description:'Use k6, publish results to CTO',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Refactor payment module - remove legacy SDK',priority:'medium',status:'todo',dueDate:daysFromNow(5),scheduledDate:daysFromNow(3),category:'Development',estimatedHours:3,description:'Migrate to stripe-node v12, update tests',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Security audit - dependency vulnerabilities',priority:'high',status:'todo',dueDate:daysFromNow(3),scheduledDate:daysFromNow(3),category:'Research',estimatedHours:1.5,description:'npm audit fix, review CVEs',createdAt:Date.now(),fromEmail:false},
+  // ── Day +4 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Production deployment - release v2.4.0',priority:'high',status:'todo',dueDate:daysFromNow(4),scheduledDate:daysFromNow(4),category:'Deployment',estimatedHours:1.5,description:'Rollback plan in Confluence, notify users',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Stakeholder demo - new dashboard features',priority:'high',status:'todo',dueDate:daysFromNow(4),scheduledDate:daysFromNow(4),category:'Meeting',estimatedHours:1,description:'Prepare slides, walk through 3 key flows',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Code review - search indexing PR',priority:'medium',status:'todo',dueDate:daysFromNow(4),scheduledDate:daysFromNow(4),category:'Review',estimatedHours:1,description:'PR #251, check Elasticsearch mappings',createdAt:Date.now(),fromEmail:false},
+  // ── Day +5 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Implement reconciliation report - Q2',priority:'high',status:'todo',dueDate:daysFromNow(5),scheduledDate:daysFromNow(5),category:'Development',estimatedHours:3,description:'Export CSV for finance team by EOD',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Onboarding session - 2 new engineers',priority:'medium',status:'todo',dueDate:daysFromNow(5),scheduledDate:daysFromNow(5),category:'Meeting',estimatedHours:1.5,description:'Setup access, walkthrough codebase',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Update monitoring dashboards - Grafana',priority:'low',status:'todo',dueDate:daysFromNow(7),scheduledDate:daysFromNow(5),category:'Other',estimatedHours:1,description:'Add p95 latency panel for new endpoints',createdAt:Date.now(),fromEmail:false},
+  // ── Day +6 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Write technical RFC - event-driven architecture',priority:'medium',status:'todo',dueDate:daysFromNow(7),scheduledDate:daysFromNow(6),category:'Documentation',estimatedHours:2.5,description:'Propose Kafka-based async messaging',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Performance review self-assessment',priority:'high',status:'todo',dueDate:daysFromNow(6),scheduledDate:daysFromNow(6),category:'Other',estimatedHours:1.5,description:'Submit to HR portal by end of week',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Sprint 24 backlog refinement',priority:'medium',status:'todo',dueDate:daysFromNow(6),scheduledDate:daysFromNow(6),category:'Planning',estimatedHours:1,description:'Groom top 20 tickets with PO',createdAt:Date.now(),fromEmail:false},
+  // ── Day +7 ───────────────────────────────────────────────────────────────────
+  {id:uid(),title:'Present reconciliation results to finance',priority:'high',status:'todo',dueDate:daysFromNow(7),scheduledDate:daysFromNow(7),category:'Meeting',estimatedHours:1,description:'Review Q2 discrepancies, action items',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Set up CI/CD pipeline for new service',priority:'medium',status:'todo',dueDate:daysFromNow(9),scheduledDate:daysFromNow(7),category:'Deployment',estimatedHours:2,description:'GitHub Actions + Docker, deploy to dev env',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Monthly tech debt review',priority:'low',status:'todo',dueDate:daysFromNow(7),scheduledDate:daysFromNow(7),category:'Planning',estimatedHours:1,description:'Prioritise top 5 debt items for next quarter',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Test time range task',priority:'medium',status:'todo',dueDate:daysFromNow(0),scheduledDate:daysFromNow(0),startTime:'09:00',endTime:'10:00',category:'Development',estimatedHours:1,description:'Test task for 9:00 AM – 10:00 AM time range',createdAt:Date.now(),fromEmail:false},
+  {id:uid(),title:'Write process document: incident response',priority:'high',status:'in_progress',dueDate:'2026-06-30',scheduledDate:daysFromNow(0),category:'Documentation',estimatedHours:8,description:'Draft, review and publish incident response SOP for the team',createdAt:Date.now(),fromEmail:false,ganttStart:daysFromNow(0)},
+  {id:uid(),title:'Q3 technical roadmap planning',priority:'high',status:'todo',dueDate:'2026-06-28',scheduledDate:daysFromNow(2),category:'Planning',estimatedHours:6,description:'Define priorities, OKRs and team capacity for Q3',createdAt:Date.now(),fromEmail:false,ganttStart:daysFromNow(2)},
+  {id:uid(),title:'Migrate legacy auth service to OAuth 2.0',priority:'medium',status:'todo',dueDate:'2026-06-25',scheduledDate:daysFromNow(1),category:'Development',estimatedHours:12,description:'Replace custom token flow, update all consumers',createdAt:Date.now(),fromEmail:false,ganttStart:daysFromNow(1)},
+  {id:uid(),title:'Prepare team performance reviews',priority:'medium',status:'todo',dueDate:'2026-06-27',scheduledDate:daysFromNow(3),category:'Other',estimatedHours:4,description:'Complete self-assessment and peer reviews for all direct reports',createdAt:Date.now(),fromEmail:false,ganttStart:daysFromNow(3)},
+];
+
+const MOCK_EMAILS = [
+  {id:'m1',subject:'[ACTION REQUIRED] PIC: please handle the payment gateway migration',from:'Nguyen Thi Lan (PM)',fromEmail:'lan@company.com',dateStr:'Today, 06:45',snippet:"Hi, I'm assigning this task to you as the PIC. The payment gateway migration must be done by end of week.",category:'task',urgent:true,taskCreated:false,isNew:true},
+  {id:'m2',subject:'[PROJ-4821] Bug: Checkout timeout assigned to you',from:'Jira (Atlassian)',fromEmail:'noreply@atlassian.net',dateStr:'Today, 07:10',snippet:'Nguyen Van A assigned PROJ-4821 to you. Priority: Critical. Checkout flow times out after 30 seconds.',category:'jira',urgent:true,taskCreated:false,isNew:true},
+  {id:'m3',subject:'Re: Q3 Technical Roadmap - please review and give feedback',from:'CTO Office',fromEmail:'cto@company.com',dateStr:'Today, 08:30',snippet:"Hi, can you have a look at the attached roadmap and provide your team's input by Thursday?",category:'have_a_look',urgent:false,taskCreated:false,isNew:false},
+  {id:'m4',subject:'[INFRA-220] Redis cluster mention - action needed',from:'Jira (Atlassian)',fromEmail:'noreply@atlassian.net',dateStr:'Today, 09:15',snippet:'Tran Minh Duc mentioned you on INFRA-220: "@you can you check the Redis config for staging?"',category:'jira',urgent:false,taskCreated:false,isNew:false},
+  {id:'m5',subject:'URGENT: Production incident - assigns to you as point of contact',from:'On-Call System',fromEmail:'alerts@pagerduty.com',dateStr:'Today, 10:05',snippet:'SEV1 incident declared. You are assigned as incident commander. API error rate >40% on prod.',category:'task',urgent:true,taskCreated:false,isNew:true},
+  {id:'m6',subject:'Invitation: All-hands meeting next Friday 2PM',from:'HR Department',fromEmail:'hr@company.com',dateStr:'Yesterday, 17:00',snippet:"You're invited to the quarterly all-hands. Please confirm attendance. Agenda attached.",category:'have_a_look',urgent:false,taskCreated:false,isNew:false},
+  {id:'m7',subject:'[MOBILE-88] iOS crash on login screen assigned to you',from:'Jira (Atlassian)',fromEmail:'noreply@atlassian.net',dateStr:'Yesterday, 15:30',snippet:'Pham Thi Hoa assigned MOBILE-88 to you. Regression from last release.',category:'jira',urgent:false,taskCreated:false,isNew:false},
+  {id:'m8',subject:'PIC is you - please coordinate the DevOps onboarding for new members',from:'Team Lead',fromEmail:'teamlead@company.com',dateStr:'Yesterday, 14:00',snippet:'Hi, as discussed in standup, you are the PIC for the DevOps onboarding program.',category:'task',urgent:false,taskCreated:false,isNew:false},
+];
+
+function decodeGmailBody(data) {
+  if(!data) return '';
+  try { return decodeURIComponent(atob(data.replace(/-/g,'+').replace(/_/g,'/')).split('').map(c=>'%'+('00'+c.charCodeAt(0).toString(16)).slice(-2)).join('')); }
+  catch(e) { return ''; }
+}
+function extractBody(payload) {
+  let text='';
+  function walk(part) {
+    if(!part) return;
+    if(part.mimeType==='text/plain'&&part.body&&part.body.data) text+=decodeGmailBody(part.body.data);
+    if(part.parts) part.parts.forEach(walk);
+  }
+  walk(payload);
+  return text;
+}
+function stripTags(html) { try { const d=document.createElement('div'); d.innerHTML=html; return d.textContent||d.innerText||''; } catch(e) { return html; } }
+
+function categorizeEmail(subject, fromEmail, body) {
+  const s=subject.toLowerCase(), b=body.toLowerCase(), f=fromEmail.toLowerCase();
+  if(/\[[a-z]+-\d+\]/i.test(subject)||f.includes('jira')||f.includes('atlassian')||
+     (b.includes('assigned')&&(b.includes('jira')||b.includes('issue')))||b.includes('mentioned you on')||b.includes('mentioned you in'))
+    return 'jira';
+  const kws=['assigns to you','assigned to you','assign to you','assigning this task to you','pic is you','you are the pic','you are pic','pic:','action required','please handle','please complete','please coordinate','point of contact','you are assigned','you are responsible','kindly handle'];
+  if(kws.some(k=>s.includes(k)||b.includes(k))) return 'task';
+  return 'have_a_look';
+}
+function isUrgentEmail(subject, body) {
+  const t=(subject+' '+body).toLowerCase();
+  return ['urgent','asap','immediately','critical','emergency','p0','p1','sev1','sev2','blocker','escalation','incident','high priority'].some(k=>t.includes(k));
+}
+function parseGmailMessage(msg, userEmail) {
+  const headers=msg.payload&&msg.payload.headers||[];
+  const getH=n=>{ const h=headers.find(h=>h.name.toLowerCase()===n.toLowerCase()); return h?h.value:''; };
+  const subject=getH('Subject'), from=getH('From'), fromEmail=(from.match(/<(.+?)>/)||[,''])[1]||from;
+  const fromName=from.replace(/<.*>/,'').trim()||fromEmail, to=getH('To'), dateStr=getH('Date');
+  if(userEmail&&!to.toLowerCase().includes(userEmail.toLowerCase())) return null;
+  const rawBody=extractBody(msg.payload);
+  const body=stripTags(rawBody).slice(0,800);
+  return {id:msg.id,subject,from:fromName,fromEmail,to,dateStr,snippet:msg.snippet||body.slice(0,150),
+    category:categorizeEmail(subject,fromEmail,body+' '+subject),urgent:isUrgentEmail(subject,body),taskCreated:false,isNew:diffDays(toISO(new Date(dateStr)))>=0};
+}
+async function gmailFetch(token, path) {
+  const res=await fetch('https://www.googleapis.com/gmail/v1/users/me'+path,{headers:{Authorization:'Bearer '+token}});
+  if(!res.ok) { const e=await res.json().catch(()=>({error:{message:'Error'}})); throw new Error(e.error&&e.error.message||'HTTP '+res.status); }
+  return res.json();
+}
+async function fetchGmailEmails(token, userEmail) {
+  const {messages=[]}=await gmailFetch(token,'/messages?q=to:me&maxResults=25');
+  if(!messages.length) return [];
+  const details=await Promise.all(messages.slice(0,20).map(m=>gmailFetch(token,'/messages/'+m.id+'?format=full')));
+  return details.map(m=>parseGmailMessage(m,userEmail)).filter(Boolean);
+}
+
+// ── Google Calendar helpers ───────────────────────────────────────────────────
+const OOO_KEYWORDS = ['day off','ooo','out of office','vacation','leave','holiday','sick','annual leave','personal day','pto','time off'];
+function isOOOEvent(title) { const t=title.toLowerCase(); return OOO_KEYWORDS.some(k=>t.includes(k)); }
+
+function fmtEventTime(dateTimeStr, dateStr) {
+  if(dateStr && !dateTimeStr) return 'All day';
+  const d=new Date(dateTimeStr); return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+}
+
+function parseCalendarEvent(event, userEmail) {
+  if(event.status==='cancelled') return null;
+  // Check the user's RSVP if they are an attendee
+  if(event.attendees && userEmail) {
+    const me=event.attendees.find(a=>a.email&&a.email.toLowerCase()===userEmail.toLowerCase());
+    if(me && me.responseStatus==='declined') return null;
+  }
+  const title=event.summary||'(No title)';
+  const isOOO=isOOOEvent(title);
+  const startDT=event.start.dateTime||null;
+  const startDate=event.start.date||(startDT?toISO(new Date(startDT)):null);
+  const endDT=event.end?.dateTime||null;
+  const durationH=startDT&&endDT?Math.round((new Date(endDT)-new Date(startDT))/360000)/10:1;
+  const isAllDay=!startDT;
+  const timeLabel=isAllDay?'All day':fmtEventTime(startDT,null);
+  const rsvp=event.attendees?((event.attendees.find(a=>a.email?.toLowerCase()===userEmail?.toLowerCase()))||{}).responseStatus||'accepted':'accepted';
+  return {
+    id: 'cal_'+event.id,
+    calEventId: event.id,
+    title: (isOOO?'🏖 ':isAllDay?'📅 ':'📅 ['+timeLabel+'] ')+title,
+    priority: isOOO?'low':event.attendees&&event.attendees.length>5?'high':'medium',
+    status: 'todo',
+    dueDate: startDate,
+    scheduledDate: startDate,
+    category: isOOO?'Other':'Meeting',
+    estimatedHours: isOOO?8:durationH,
+    description: [
+      timeLabel!=='All day'?'⏰ '+timeLabel:null,
+      event.location?'📍 '+event.location:null,
+      event.description?event.description.slice(0,200):null,
+      rsvp==='tentative'?'(Tentative RSVP)':null,
+    ].filter(Boolean).join('\n'),
+    fromCalendar: true,
+    isOOO,
+    isAllDay,
+    timeLabel,
+    calUpdated: event.updated,
+    createdAt: Date.now(),
+    fromEmail: false,
+  };
+}
+
+async function fetchCalendarEvents(token, userEmail, daysAhead=14) {
+  const timeMin=new Date().toISOString();
+  const tMax=new Date(); tMax.setDate(tMax.getDate()+daysAhead);
+  const timeMax=tMax.toISOString();
+  const url=`https://www.googleapis.com/calendar/v3/calendars/primary/events?timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}&singleEvents=true&orderBy=startTime&maxResults=50`;
+  const res=await fetch(url,{headers:{Authorization:'Bearer '+token}});
+  if(!res.ok) { const e=await res.json().catch(()=>({error:{message:'Error'}})); throw new Error(e.error?.message||'Calendar HTTP '+res.status); }
+  const data=await res.json();
+  return (data.items||[]).map(e=>parseCalendarEvent(e,userEmail)).filter(Boolean);
+}
+
+// ── TaskForm ──────────────────────────────────────────────────────────────────
+function TaskForm({ onSave, onClose, initial, prefillDate }) {
+  const today = toISO(new Date());
+  const def = { title:'', priority:'medium', category:'Development', dueDate: prefillDate||today,
+    scheduledDate: prefillDate||today, estimatedHours:1, description:'', status:'todo' };
+  const [f, setF] = useState(initial ? {...def,...initial} : def);
+  function set(k,v){ setF(p=>({...p,[k]:v})); }
+  function submit(e){ e.preventDefault(); if(!f.title.trim()) return; onSave({...f,id:f.id||uid(),createdAt:f.createdAt||Date.now(),fromEmail:f.fromEmail||false}); }
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal">
+        <div className="modal-title">{initial?'Edit Task':'New Task'}</div>
+        <form onSubmit={submit}>
+          <div className="form-group">
+            <label className="form-label">Title *</label>
+            <input className="form-input" value={f.title} onChange={e=>set('title',e.target.value)} placeholder="What needs to be done?" required autoFocus/>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Priority</label>
+              <select className="form-input" value={f.priority} onChange={e=>set('priority',e.target.value)}>
+                <option value="high">🔴 High</option><option value="medium">🟡 Medium</option><option value="low">🟢 Low</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Category</label>
+              <select className="form-input" value={f.category} onChange={e=>set('category',e.target.value)}>
+                {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Due Date</label>
+            <input className="form-input" type="date" value={f.dueDate} onChange={e=>set('dueDate',e.target.value)} min={today}/>
+            <div className="quick-dates">
+              {[[0,'Today'],[1,'Tomorrow'],[3,'+3 days'],[14,'+2 weeks']].map(([n,label])=>(
+                <button key={n} type="button" className="quick-date-btn" onClick={()=>set('dueDate',daysFromNow(n))}>{label}</button>
+              ))}
+            </div>
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Scheduled Date</label>
+              <input className="form-input" type="date" value={f.scheduledDate} onChange={e=>set('scheduledDate',e.target.value)}/>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Est. Hours</label>
+              <input className="form-input" type="number" min="0.5" max="16" step="0.5" value={f.estimatedHours} onChange={e=>set('estimatedHours',+e.target.value)}/>
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Time Range <span style={{fontWeight:400,color:'#a0aec0',fontSize:11}}>(optional — sets Morning / Afternoon section)</span></label>
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <input className="form-input" type="time" value={f.startTime||''} onChange={e=>{
+                const st=e.target.value;
+                set('startTime',st);
+                // auto-calc estimatedHours from range if end is set
+                if(st&&f.endTime){const [sh,sm]=st.split(':').map(Number);const [eh,em]=f.endTime.split(':').map(Number);const h=Math.round((eh*60+em-sh*60-sm)/60*10)/10;if(h>0)set('estimatedHours',h);}
+              }} style={{flex:1}}/>
+              <span style={{color:'#a0aec0',fontWeight:600,flexShrink:0}}>→</span>
+              <input className="form-input" type="time" value={f.endTime||''} onChange={e=>{
+                const et=e.target.value;
+                set('endTime',et);
+                if(f.startTime&&et){const [sh,sm]=f.startTime.split(':').map(Number);const [eh,em]=et.split(':').map(Number);const h=Math.round((eh*60+em-sh*60-sm)/60*10)/10;if(h>0)set('estimatedHours',h);}
+              }} style={{flex:1}}/>
+              {(f.startTime||f.endTime)&&<button type="button" style={{background:'none',border:'none',color:'#a0aec0',cursor:'pointer',fontSize:16,padding:'0 4px'}} onClick={()=>{set('startTime','');set('endTime','');}}>✕</button>}
+            </div>
+          </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea className="form-input" rows={2} value={f.description} onChange={e=>set('description',e.target.value)} placeholder="Optional notes..."/>
+          </div>
+          <div className="form-actions">
+            <button type="button" className="btn btn-secondary" onClick={onClose}>Cancel</button>
+            <button type="submit" className="btn btn-primary">💾 Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ── RescheduleModal ───────────────────────────────────────────────────────────
+function RescheduleModal({ tasks, onReschedule, onClose }) {
+  const today = toISO(new Date());
+  const CAPACITY = 8;
+  const [taskActions, setTaskActions] = React.useState({});
+  const setAction = (id, act) => setTaskActions(p=>({...p,[id]:p[id]===act?undefined:act}));
+
+  const overloaded = React.useMemo(()=>{
+    const byDay = {};
+    tasks.filter(t=>t.status!=='done'&&t.status!=='cancelled').forEach(t=>{
+      byDay[t.scheduledDate]=byDay[t.scheduledDate]||[]; byDay[t.scheduledDate].push(t);
+    });
+    return Object.entries(byDay)
+      .map(([d,ts])=>({date:d,tasks:ts,totalH:ts.reduce((a,t)=>a+t.estimatedHours,0)}))
+      .filter(({totalH})=>totalH>CAPACITY)
+      .map(({date,tasks:ts,totalH})=>({date,tasks:ts,totalH,pct:Math.round((totalH-CAPACITY)/CAPACITY*100)}))
+      .sort((a,b)=>a.date.localeCompare(b.date));
+  },[tasks]);
+
+  // Preview target dates for tasks with AI action
+  const aiPreview = React.useMemo(()=>{
+    const dayH={};
+    tasks.filter(t=>t.status!=='done'&&t.status!=='cancelled').forEach(t=>{
+      dayH[t.scheduledDate]=(dayH[t.scheduledDate]||0)+t.estimatedHours;
+    });
+    const preview={};
+    overloaded.forEach(({date,tasks:ots})=>{
+      ots.forEach(t=>{
+        if(taskActions[t.id]!=='ai') return;
+        let nd=new Date(date+'T00:00:00'); nd.setDate(nd.getDate()+1);
+        let ndStr=toISO(nd); let safety=0;
+        while((dayH[ndStr]||0)+t.estimatedHours>CAPACITY&&safety<30){ nd.setDate(nd.getDate()+1); ndStr=toISO(nd); safety++; }
+        preview[t.id]=ndStr;
+        dayH[ndStr]=(dayH[ndStr]||0)+t.estimatedHours;
+      });
+    });
+    return preview;
+  },[tasks,taskActions,overloaded]);
+
+  function quickSelect(cap){
+    const actions={};
+    overloaded.forEach(({tasks:ots})=>{
+      const sorted=[...ots].sort((a,b)=>scoreTask(b)-scoreTask(a));
+      let h=0;
+      sorted.forEach(t=>{ if(h+t.estimatedHours<=cap){h+=t.estimatedHours;}else{actions[t.id]='ai';} });
+    });
+    setTaskActions(actions);
+  }
+
+  function applyActions(){
+    const newTasks=[...tasks];
+    const dayH={};
+    newTasks.filter(t=>t.status!=='done'&&t.status!=='cancelled').forEach(t=>{
+      dayH[t.scheduledDate]=(dayH[t.scheduledDate]||0)+t.estimatedHours;
+    });
+    Object.entries(taskActions).forEach(([id,action])=>{
+      if(!action||action==='keep') return;
+      const idx=newTasks.findIndex(t=>t.id===id); if(idx<0) return;
+      const t=newTasks[idx];
+      if(action==='skip'){
+        newTasks[idx]={...t,status:'cancelled'};
+        dayH[t.scheduledDate]=Math.max(0,(dayH[t.scheduledDate]||0)-t.estimatedHours);
+      } else if(action==='next'){
+        const nd=new Date(t.scheduledDate+'T00:00:00'); nd.setDate(nd.getDate()+1);
+        const ndStr=toISO(nd);
+        dayH[t.scheduledDate]=Math.max(0,(dayH[t.scheduledDate]||0)-t.estimatedHours);
+        dayH[ndStr]=(dayH[ndStr]||0)+t.estimatedHours;
+        newTasks[idx]={...t,scheduledDate:ndStr};
+      } else if(action==='ai'){
+        const ndStr=aiPreview[id]; if(!ndStr) return;
+        dayH[t.scheduledDate]=Math.max(0,(dayH[t.scheduledDate]||0)-t.estimatedHours);
+        dayH[ndStr]=(dayH[ndStr]||0)+t.estimatedHours;
+        newTasks[idx]={...t,scheduledDate:ndStr};
+      }
+    });
+    onReschedule(newTasks);
+  }
+
+  const actionCount=Object.values(taskActions).filter(a=>a&&a!=='keep').length;
+
+  const btnInactive={fontSize:10,padding:'2px 7px',border:'1px solid #e2e8f0',borderRadius:4,cursor:'pointer',fontWeight:600,lineHeight:1.5,background:'#f7fafc',color:'#a0aec0'};
+  function btnActive(color,bg){return{...btnInactive,background:bg,color:color,borderColor:color};}
+
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal" style={{maxWidth:580}}>
+        <div className="modal-title">⚡ Schedule Check</div>
+        {overloaded.length===0
+          ? <p style={{color:'#48bb78',fontSize:13}}>✓ No overloaded days — you are good!</p>
+          : <>
+            <div style={{background:'#f7fafc',borderRadius:8,padding:'8px 10px',marginBottom:12}}>
+              <div style={{fontSize:11,fontWeight:700,color:'#4a5568',marginBottom:6}}>⚡ Quick-select overflow tasks:</div>
+              <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                <button className="reschedule-btn" style={{background:'#3182ce',fontSize:11,padding:'3px 10px'}} onClick={()=>quickSelect(CAPACITY)}>📐 AI move to fit 100%</button>
+                <button className="reschedule-btn" style={{background:'#ed8936',fontSize:11,padding:'3px 10px'}} onClick={()=>quickSelect(CAPACITY*1.2)}>🎯 AI move to fit 120%</button>
+                <button className="reschedule-btn" style={{background:'#718096',fontSize:11,padding:'3px 10px'}} onClick={()=>setTaskActions({})}>↩ Reset all</button>
+              </div>
+            </div>
+            {overloaded.map(({date,tasks:ots,totalH,pct})=>{
+              const severity=pct>=50?'severe':pct>=20?'mild':'';
+              return (
+                <div key={date} className={'overload-alert '+severity} style={{marginBottom:10}}>
+                  <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:6}}>
+                    <span style={{fontWeight:800,fontSize:13,color:pct>=50?'#c53030':'#b7791f'}}>{pct>=50?'🔴':'🟡'} {fmtFull(date)}</span>
+                    <span style={{fontSize:11,color:'#718096',marginLeft:'auto'}}>{totalH.toFixed(1)}h / {CAPACITY}h</span>
+                  </div>
+                  {[...ots].sort((a,b)=>scoreTask(b)-scoreTask(a)).map(t=>{
+                    const act=taskActions[t.id];
+                    const aiDest=act==='ai'&&aiPreview[t.id]?(' → '+fmtFull(aiPreview[t.id]).slice(0,6)):'';
+                    return (
+                      <div key={t.id} style={{display:'flex',alignItems:'center',gap:6,padding:'5px 0',borderBottom:'1px dashed #e2e8f0'}}>
+                        <div style={{flex:1,minWidth:0}}>
+                          <div style={{fontSize:12,fontWeight:600,color:act==='skip'?'#a0aec0':'#2d3748',textDecoration:act==='skip'?'line-through':'none',whiteSpace:'nowrap',overflow:'hidden',textOverflow:'ellipsis'}}>{t.title}</div>
+                          <div style={{fontSize:10,color:'#718096'}}>{t.estimatedHours}h · {t.priority}</div>
+                        </div>
+                        <div style={{display:'flex',gap:3,flexShrink:0}}>
+                          <button style={act==='skip'?btnActive('#c53030','#fff5f5'):btnInactive} onClick={()=>setAction(t.id,'skip')} title="Cancel — task will not be done">✕ Skip</button>
+                          <button style={act==='next'?btnActive('#6b46c1','#faf5ff'):btnInactive} onClick={()=>setAction(t.id,'next')} title="Move to the next day">➡ Next day</button>
+                          <button style={act==='ai'?btnActive('#3182ce','#ebf8ff'):btnInactive} onClick={()=>setAction(t.id,'ai')} title="AI picks the earliest day with capacity">🤖 AI{aiDest}</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+            <div style={{marginTop:10,display:'flex',gap:8,alignItems:'center'}}>
+              {actionCount>0
+                ? <button className="reschedule-btn" style={{background:'#38a169',flex:1,padding:'8px'}} onClick={applyActions}>✓ Apply {actionCount} change{actionCount!==1?'s':''}</button>
+                : <div style={{fontSize:11,color:'#a0aec0',flex:1}}>Pick an action for each task you want to handle, then click Apply.</div>
+              }
+              <button className="btn btn-secondary btn-sm" onClick={onClose}>Close</button>
+            </div>
+          </>
+        }
+        {overloaded.length===0&&<div className="form-actions" style={{marginTop:12}}><button className="btn btn-secondary" onClick={onClose}>Close</button></div>}
+      </div>
+    </div>
+  );
+}
+
+// ── TaskRow (top-level, used by DailyView) ───────────────────────────────────
+function TaskRow({ t, onToggle, onEdit, onDelete, hideCheck=false }) {
+  const diff = diffDays(t.dueDate);
+  const overdue = diff < 0 && t.status !== 'done' && t.status !== 'cancelled';
+  return (
+    <div className={'task-item'+(t.status==='done'?' done':'')+(t.status==='cancelled'?' done':'')+(overdue?' overdue-item':'')+(hideCheck?' top3-pinned':'')}>
+      {!hideCheck&&<div className={'task-check'+(t.status==='done'?' checked':'')} onClick={()=>onToggle(t.id)}/>}
+      <div className="priority-dot" style={{background:t.priority==='high'?'#fc8181':t.priority==='medium'?'#f6ad55':'#68d391'}}/>
+      <div className="task-body">
+        <div className="task-title">{t.title}{t.fromEmail&&<span className="tag-email" style={{marginLeft:6}}>✉ Email</span>}{t.fromCalendar&&<span className="tag-email" style={{marginLeft:6,background:'#ebf4ff',color:'#2b6cb0',border:'1px solid #c3dafe'}}>📅 Cal</span>}{t.isRoutine&&<span className="tag-email" style={{marginLeft:6,background:'#e9d8fd',color:'#553c9a',border:'1px solid #d6bcfa'}}>🔄 Routine</span>}</div>
+        <div className="task-meta">
+          <span className={'badge badge-'+t.priority}>{t.priority}</span>
+          <span className="badge badge-cat">{t.category}</span>
+          <span className={'badge '+(overdue?'badge-overdue':'badge-date')}>
+            {overdue?'⚠ Overdue '+Math.abs(diff)+'d':diff===0?'Due today':diff===1?'Due tomorrow':'Due '+fmt(t.dueDate)}
+          </span>
+          {t.estimatedHours&&<span className="badge badge-date">⏱ {t.estimatedHours}h</span>}
+        </div>
+        {t.description&&<div style={{fontSize:11,color:'#a0aec0',marginTop:3}}>{t.description}</div>}
+      </div>
+      <div className="task-actions">
+        <button className="icon-btn" title="Edit" onClick={()=>onEdit(t)}>✏️</button>
+        <button className="icon-btn danger" title="Delete" onClick={()=>onDelete(t.id)}>🗑</button>
+      </div>
+    </div>
+  );
+}
+
+// ── DailyView ─────────────────────────────────────────────────────────────────
+function DailyView({ tasks, routines=[], onToggle, onEdit, onDelete, onAdd, onReschedule, onAddRoutine, onGoWeekly, onSaveTask, top3={tasks:[null,null,null],forDate:null}, onSwitchTop3 }) {
+  const today = toISO(new Date());
+  const CAPACITY = 8;
+  const dayTasks = tasks.filter(t=>t.scheduledDate===today).sort((a,b)=>scoreTask(b)-scoreTask(a));
+  const doneTasks = dayTasks.filter(t=>t.status==='done');
+  const todoTasks = dayTasks.filter(t=>t.status!=='done'&&t.status!=='cancelled');
+  const totalH = dayTasks.reduce((a,t)=>a+t.estimatedHours,0);
+  const doneH = doneTasks.reduce((a,t)=>a+t.estimatedHours,0);
+  const completePct = totalH>0 ? Math.round(doneH/totalH*100) : 0;
+  const overloadPct = totalH>CAPACITY ? Math.round((totalH-CAPACITY)/CAPACITY*100) : 0;
+  const overloadLevel = overloadPct>=50?'severe':overloadPct>=20?'mild':'none';
+
+  // Next work day: if Sat skip to Mon, else +1
+  const todayDow = new Date().getDay();
+  const nwdD = new Date();
+  nwdD.setDate(nwdD.getDate()+(todayDow===6?2:1));
+  const nextWorkDay = toISO(nwdD);
+  const nwdLabel = todayDow===6||todayDow===0 ? 'Monday' : 'Tomorrow';
+
+  // Routines due today not yet scheduled
+  const pendingRoutines = (routines||[]).filter(r=>r.active&&r.weekDays.includes(todayDow)&&!tasks.some(t=>t.scheduledDate===today&&(t.fromRoutineId===r.id||t.title===r.title)&&t.status!=='done'));
+
+  // ── Top 3 data ───────────────────────────────────────────────────────────
+  // Determine if top3 was generated (has at least one non-null task)
+  const top3Tasks = top3?.tasks || [null,null,null];
+  const top3ForDate = top3?.forDate || null;
+  const hasTop3 = top3Tasks.some(Boolean);
+  // Title logic: forDate===today → "today", forDate===tomorrow → "tomorrow", else fallback
+  const top3IsForToday = top3ForDate === today;
+  const top3IsForTomorrow = top3ForDate === nextWorkDay;
+  const top3Title = !hasTop3
+    ? '💡 Top 3 Suggestions'
+    : (top3IsForToday||!top3ForDate) ? '💡 Top 3 to do today' : '💡 Top 3 to do tomorrow';
+  // Active suggestions: use top3Tasks if set, else fall back to computed
+  // Fallback suggestions (reused for empty slots when partial top3 exists)
+  function buildFallback(excludeIds) {
+    // Same priority order as the main fallback: today high → today med → upcoming
+    const routineTitles = new Set(pendingRoutines.map(r=>r.title));
+    const todayHighPri = todoTasks.filter(t=>t.priority==='high'&&!excludeIds.has(t.id)&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    const todayMedPri  = todoTasks.filter(t=>t.priority==='medium'&&!excludeIds.has(t.id)&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    const upcoming = [...tasks].filter(t=>t.status!=='done'&&t.status!=='cancelled'&&t.scheduledDate!==today&&!excludeIds.has(t.id)&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    let combined=[];
+    const used=new Set([...excludeIds]);
+    for(const t of [...todayHighPri,...todayMedPri]){ if(combined.length>=3) break; if(!used.has(t.id)){used.add(t.id);combined.push({task:t,reason:t.priority==='high'?'🔴 High priority today':'📋 Scheduled today',fromRoutine:null,isTodayTask:true});} }
+    for(const t of upcoming){ if(combined.length>=3) break; if(!used.has(t.id)){used.add(t.id);combined.push({task:t,reason:diffDays(t.dueDate)<0?'⚠ Overdue!':t.priority==='high'?'🔴 High priority':'⏰ Due soon',fromRoutine:null,isTodayTask:false});} }
+    return combined.slice(0,3);
+  }
+  let activeTop3;
+  if(hasTop3) {
+    const lockedIds = new Set(top3Tasks.filter(Boolean).map(t=>t.id));
+    const fallback = buildFallback(lockedIds);
+    let fi = 0;
+    activeTop3 = top3Tasks.map((t,i) => {
+      if(t) return {task:t,rank:i+1,reason:t.dueDate===today?'Due today!':t.priority==='high'?'High priority':diffDays(t.dueDate)<=5?'⏰ Due soon':'Planned',fromRoutine:null,isTodayTask:t.scheduledDate===today};
+      const fb = fallback[fi++];
+      return fb ? {...fb, rank:i+1} : null;
+    }).filter(Boolean);
+  } else {
+    // Fallback: prioritize TODAY's high-priority tasks first, then fill with upcoming
+    const routineTitles = new Set(pendingRoutines.map(r=>r.title));
+    // Today's incomplete non-routine tasks scored by priority
+    const todayHighPri = todoTasks.filter(t=>t.priority==='high'&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    const todayMedPri = todoTasks.filter(t=>t.priority==='medium'&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    // Upcoming non-routine tasks (not today) as fill
+    const upcoming = [...tasks].filter(t=>t.status!=='done'&&t.status!=='cancelled'&&t.scheduledDate!==today&&!routineTitles.has(t.title)&&!t.isRoutine&&!t.fromRoutineId).sort((a,b)=>scoreTask(b)-scoreTask(a));
+    let combined=[];
+    const used=new Set();
+    // Fill with today's tasks first
+    for(const t of [...todayHighPri,...todayMedPri]){ if(combined.length>=3) break; if(!used.has(t.id)){used.add(t.id);combined.push({task:t,reason:t.priority==='high'?'🔴 High priority today':'📋 Scheduled today',fromRoutine:null,isTodayTask:true});} }
+    // Fill remaining with upcoming
+    for(const t of upcoming){ if(combined.length>=3) break; if(!used.has(t.id)){used.add(t.id);combined.push({task:t,reason:diffDays(t.dueDate)<0?'⚠ Overdue!':t.priority==='high'?'🔴 High priority':'⏰ Due soon',fromRoutine:null,isTodayTask:false});} }
+    activeTop3 = combined.slice(0,3).map((s,i)=>({...s,rank:i+1}));
+  }
+  // Done flags: check live task state by id or title+today
+  const isTaskDone = t => !!(tasks.find(tt=>tt.id===t.id)?.status==='done' || tasks.some(tt=>tt.title===t.title&&tt.scheduledDate===today&&tt.status==='done'));
+  const top3Done = top3Tasks.map(t=> t ? isTaskDone(t) : false); // per-slot done for trophy
+  const activeTop3Done = activeTop3.map(s=>isTaskDone(s.task));
+
+  // ── Streak tracker data ────────────────────────────────────────────────────
+  // Daily Tasks = today's routine tasks (up to 3)
+  const top3Daily = dayTasks.filter(t=>t.isRoutine||t.fromRoutineId).slice(0,3);
+  const dailyDone = top3Daily.map(t=>t.status==='done');
+  const suggWin = top3Done.filter(Boolean).length===3 || activeTop3Done.filter(Boolean).length===3;
+  const dailyWin = dailyDone.filter(Boolean).length===3;
+  // Switch-to-top3 popup state
+
+  // ── Timeframe split ────────────────────────────────────────────────────────
+  const getHour = t => {
+    if(t.startTime) return parseInt(t.startTime.split(':')[0]);
+    // For routine tasks: look up the routine definition's startTime
+    if(t.fromRoutineId||t.isRoutine){
+      const r=(routines||[]).find(r=>r.id===t.fromRoutineId||r.title===t.title);
+      if(r?.startTime) return parseInt(r.startTime.split(':')[0]);
+    }
+    // Fallback: parse time embedded in title like 'Check emails (09:00-09:30)'
+    const m=t.title.match(/\((\d{2}):\d{2}/);
+    if(m) return parseInt(m[1]);
+    return null;
+  };
+  const getTop3Slot = id => top3Tasks.findIndex(t=>t&&t.id===id); // 0/1/2 or -1
+  const isInTop3 = id => getTop3Slot(id) >= 0;
+  // Top-3 tasks stay pinned in their section even when done
+  const morningTasks = todoTasks.filter(t=>{ const h=getHour(t); return h!==null&&h<12; })
+    .sort((a,b)=>a.startTime>b.startTime?1:-1);
+  const afternoonTasks = todoTasks.filter(t=>{ const h=getHour(t); return h!==null&&h>=12; })
+    .sort((a,b)=>a.startTime>b.startTime?1:-1);
+  const flexTasks = todoTasks.filter(t=>getHour(t)===null);
+  const doneTasks2 = doneTasks;
+
+  // ── Deadlines ─────────────────────────────────────────────────────────────
+  const nextWorkDayDue = tasks.filter(t=>t.status!=='done'&&t.dueDate===nextWorkDay&&t.scheduledDate!==today)
+    .sort((a,b)=>scoreTask(b)-scoreTask(a));
+  // Near-deadline: only 2–5 days out
+  const nearDeadline = tasks.filter(t=>t.status!=='done'&&t.scheduledDate!==today&&diffDays(t.dueDate)>=2&&diffDays(t.dueDate)<=5)
+    .sort((a,b)=>diffDays(a.dueDate)-diffDays(b.dueDate));
+
+  function SwitchTop3Btn({task}) {
+    const [picking, setPicking] = React.useState(false);
+    const slot = getTop3Slot(task.id); // -1 if not in top3
+    const inTop3 = slot >= 0;
+    if(inTop3) {
+      // Show "★ #X" badge — click to remove from Top 3
+      return (
+        <button
+          className="switch-top3-btn"
+          style={{background:'#ede9fe',color:'#6d28d9',borderColor:'#c4b5fd',fontWeight:800}}
+          title={"Remove from Top "+(slot+1)}
+          onClick={e=>{ e.stopPropagation(); onSwitchTop3&&onSwitchTop3(null,slot); }}>
+          ★ #{slot+1}
+        </button>
+      );
+    }
+    const freeSlot = top3Tasks.findIndex(t=>!t);
+    if(freeSlot >= 0) {
+      // Has a free slot — go directly there
+      return (
+        <button className="switch-top3-btn" title={"Add to Top "+(freeSlot+1)}
+          onClick={e=>{ e.stopPropagation(); onSwitchTop3&&onSwitchTop3(task, freeSlot); }}>
+          ↑ Top 3
+        </button>
+      );
+    }
+    // All 3 slots full — show slot picker
+    return (
+      <div style={{position:'relative',display:'inline-block'}}>
+        <button className="switch-top3-btn" title="Replace a Top 3 slot"
+          onClick={e=>{ e.stopPropagation(); setPicking(p=>!p); }}>
+          ↑ Top 3
+        </button>
+        {picking && (
+          <div style={{position:'absolute',right:0,top:'110%',zIndex:99,background:'#fff',border:'1px solid #c3dafe',borderRadius:6,boxShadow:'0 2px 8px rgba(0,0,0,.15)',display:'flex',gap:3,padding:4}}>
+            {[0,1,2].map(i=>(
+              <button key={i}
+                className="switch-top3-btn"
+                style={{fontSize:9,padding:'2px 6px'}}
+                onClick={e=>{ e.stopPropagation(); onSwitchTop3&&onSwitchTop3(task,i); setPicking(false); }}>
+                #{i+1}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+  function Top3TaskRow({t}) {
+    return (
+      <div style={{flex:1,minWidth:0}}>
+        <TaskRow t={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete}/>
+      </div>
+    );
+  }
+  // Helper: add minutes to HH:MM string
+  function addMins(hhmm, mins) {
+    const [h,m] = hhmm.split(':').map(Number);
+    const tot = h*60+m+mins;
+    return String(Math.floor(tot/60)%24).padStart(2,'0')+':'+String(tot%60).padStart(2,'0');
+  }
+
+  // TimeframeBtn: small inline buttons, same style as SwitchTop3Btn
+  function TimeframeBtn({task}) {
+    const h = task.startTime ? parseInt(task.startTime.split(':')[0]) : null;
+    const isMorning   = h!==null && h<12;
+    const isAfternoon = h!==null && h>=12;
+    const durationMins = Math.max(15, Math.round((task.estimatedHours||0.5)*60));
+    function assign(frame) {
+      let startTime='', endTime='';
+      if(frame==='morning'&&!isMorning){
+        const lastEnd=morningTasks.filter(t=>t.id!==task.id&&t.endTime).reduce((mx,t)=>t.endTime>mx?t.endTime:mx,'');
+        startTime=lastEnd||'09:00'; endTime=addMins(startTime,durationMins);
+        if(parseInt(endTime.split(':')[0])>=12){startTime='09:00';endTime=addMins('09:00',durationMins);}
+      } else if(frame==='afternoon'&&!isAfternoon){
+        const lastEnd=afternoonTasks.filter(t=>t.id!==task.id&&t.endTime).reduce((mx,t)=>t.endTime>mx?t.endTime:mx,'');
+        startTime=lastEnd||'13:00'; endTime=addMins(startTime,durationMins);
+      }
+      onSaveTask&&onSaveTask({...task,startTime,endTime});
+    }
+    const base = {fontSize:10,fontWeight:700,border:'1px solid',borderRadius:5,padding:'2px 4px',cursor:'pointer',lineHeight:1.4,width:'100%',textAlign:'center'};
+    return (
+      <>
+        <button style={{...base,width:'100%',textAlign:'center',...(isMorning?{background:'#fffbeb',color:'#b45309',borderColor:'#fcd34d'}:{background:'#edf2ff',color:'#667eea',borderColor:'#c3dafe'})}}
+          title="Move to Morning" onClick={e=>{e.stopPropagation();assign('morning');}}>🌅</button>
+        <button style={{...base,width:'100%',textAlign:'center',...(isAfternoon?{background:'#fff7ed',color:'#c2410c',borderColor:'#fb923c'}:{background:'#edf2ff',color:'#667eea',borderColor:'#c3dafe'})}}
+          title="Move to Afternoon" onClick={e=>{e.stopPropagation();assign('afternoon');}}>☀️</button>
+      </>
+    );
+  }
+
+  const TimeframeSection = ({label, icon, tasks:tlist}) => tlist.length===0 ? null : (
+    <div>
+      <div className="timeframe-hdr"><span>{icon} {label}</span></div>
+      {tlist.map(t=>(
+        <div key={t.id} style={{display:'flex',alignItems:'flex-start',gap:4}}>
+          <div style={{flex:1,minWidth:0}}><TaskRow t={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete}/></div>
+          <div style={{display:'flex',flexDirection:'column',gap:3,paddingTop:4,flexShrink:0,alignItems:'stretch',width:52}}>
+            <TimeframeBtn task={t}/>
+            <SwitchTop3Btn task={t}/>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
+  return (
+    <div>
+      {/* ── Routine reminders ── */}
+
+
+      {/* ── Top 3 + Trophy Corner (2-col) ── */}
+      {activeTop3.length>0&&(
+        <div className="card">
+          <div style={{display:'flex',gap:0}}>
+            {/* Left: Top 3 list */}
+            <div style={{flex:'1 1 0',minWidth:0}}>
+              <div className="card-title" style={{marginBottom:10}}>{top3Title}</div>
+              {activeTop3.map(s=>{
+                const {task:t,rank,fromRoutine,isTodayTask}=s;
+                const isDone = activeTop3Done[rank-1];
+                const prioColor = t.priority==='high'?'#fc8181':t.priority==='medium'?'#f6ad55':'#68d391';
+                const prioLabel = t.priority==='high'?'High':t.priority==='medium'?'Med':'Low';
+                const timeRange = t.startTime&&t.endTime ? t.startTime+'–'+t.endTime : null;
+                const dur = timeRange || (t.estimatedHours ? t.estimatedHours+'h' : null);
+                const tomorrow2 = daysFromNow(1);
+                const dateLabel = t.scheduledDate===today?'Today':t.scheduledDate===tomorrow2?'Tomorrow':t.dueDate===today?'Due today':t.dueDate?fmt(t.dueDate):null;
+                function handleToggle() {
+                  // Always lock this slot so card stays after done (even if other slots already locked)
+                  onSwitchTop3&&onSwitchTop3(t, rank-1);
+                  if(isDone) { onToggle(t.id); return; }
+                  if(isTodayTask) { onToggle(t.id); return; }
+                  if(fromRoutine) {
+                    onSaveTask&&onSaveTask({id:uid(),title:t.title,estimatedHours:t.estimatedHours,priority:t.priority,scheduledDate:today,dueDate:today,status:'done',category:'Routine',fromRoutineId:fromRoutine.id,isRoutine:true,createdAt:Date.now()});
+                  } else {
+                    onSaveTask&&onSaveTask({...t,scheduledDate:today,status:'done'});
+                  }
+                }
+                return (
+                  <div key={t.id+'_'+rank} className={'top3-mirror'+(isDone?' done':'')}>
+                    <div className={'top3-mirror-circle'+(isDone?' done':'')} onClick={handleToggle}>
+                      {isDone?'✓':rank}
+                    </div>
+                    <div className="top3-mirror-body">
+                      <div className={'top3-mirror-title'+(isDone?' done':'')}>{t.title}</div>
+                      <div className="top3-mirror-meta">
+                        <span style={{fontSize:10,fontWeight:700,color:prioColor,background:prioColor+'22',border:'1px solid '+prioColor+'55',borderRadius:4,padding:'1px 5px'}}>{prioLabel}</span>
+                        {dur&&<span style={{fontSize:10,color:'#718096'}}>⏱ {dur}</span>}
+                        {dateLabel&&<span style={{fontSize:10,color:'#718096'}}>📅 {dateLabel}</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              {!hasTop3&&(
+                <div style={{fontSize:11,color:'#a0aec0',marginTop:4}}>
+                  Auto-updated at 17:10 · <button style={{background:'none',border:'none',color:'#667eea',fontSize:11,fontWeight:600,cursor:'pointer',padding:0,textDecoration:'underline'}} onClick={()=>{ const t=buildTop3FromTasks(tasks); [0,1,2].forEach(i=>onSwitchTop3&&onSwitchTop3(t[i],i)); }}>Generate now</button>
+                </div>
+              )}
+            </div>
+            {/* Right: Trophy Corner */}
+            <div className="streak-panel">
+              <div style={{fontSize:9,fontWeight:800,color:'#667eea',textTransform:'uppercase',letterSpacing:.5,marginBottom:4,textAlign:'center'}}>🏅 Trophy Corner</div>
+              <div className="streak-panel-row">
+                <div className="streak-panel-label">Top 3</div>
+                <div className="streak-panel-dots">
+                  {[0,1,2].map(i=>{
+                    const slotTask=top3Tasks[i]||(activeTop3[i]?.task);
+                    const done=slotTask?isTaskDone(slotTask):false;
+                    const hasTask=!!(top3Tasks[i]||activeTop3[i]);
+                    return (
+                      <span key={i} className={'sp-dot'+(hasTask?(done?' done':' pending'):' empty')}>
+                        {done?'✓':hasTask?i+1:''}
+                      </span>
+                    );
+                  })}
+                </div>
+                <span className={'sp-trophy'+(suggWin?' lit':'')}>🏆</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Today's tasks ── */}
+      <div className="card">
+        <div className="card-title">📅 Today — {fmtFull(today)}</div>
+        <div style={{display:'flex',gap:16,marginBottom:10,alignItems:'center',flexWrap:'wrap'}}>
+          <div style={{flex:1}}>
+            <div className="progress-bar"><div className="progress-fill" style={{width:completePct+'%'}}/></div>
+            <div className="progress-text">{doneTasks.length}/{dayTasks.length} tasks · {doneH.toFixed(1)}/{totalH.toFixed(1)}h · {completePct}%</div>
+          </div>
+          {overloadLevel!=='none'&&<span style={{fontSize:12,color:overloadLevel==='severe'?'#c53030':'#b7791f',fontWeight:700,padding:'2px 8px',borderRadius:10,background:overloadLevel==='severe'?'#fff5f5':'#fffbeb'}}>
+            {overloadLevel==='severe'?'🔴':'🟡'} {overloadPct}% overloaded
+          </span>}
+        </div>
+        <div style={{fontSize:12,color:'#718096',marginBottom:8,display:'flex',gap:12,flexWrap:'wrap'}}>
+          <span>📋 <b style={{color:'#2d3748'}}>{todoTasks.length}</b> incomplete task{todoTasks.length!==1?'s':''}</span>
+          <span>⏱ <b style={{color:'#2d3748'}}>{(totalH-doneH).toFixed(1)}h</b> remaining</span>
+          {overloadLevel!=='none'&&<span style={{color:overloadLevel==='severe'?'#c53030':'#b7791f',fontWeight:600}}>⚠ {(totalH-CAPACITY).toFixed(1)}h over capacity</span>}
+        </div>
+        {overloadLevel!=='none'&&(
+          <div className={'overload-alert '+overloadLevel} style={{marginBottom:10}}>
+            <div className="overload-title">
+              {overloadLevel==='severe'
+                ? '🔴 Heavily overloaded — '+totalH.toFixed(1)+'h scheduled vs '+CAPACITY+'h capacity!'
+                : '🟡 Overloaded — '+totalH.toFixed(1)+'h scheduled vs '+CAPACITY+'h capacity'}
+            </div>
+            <div style={{fontSize:12,color:'#718096',marginBottom:8}}>
+              {todoTasks.length} incomplete task{todoTasks.length!==1?'s':''} · {(totalH-doneH).toFixed(1)}h remaining · need to free up {(totalH-CAPACITY).toFixed(1)}h
+            </div>
+            <div style={{fontSize:12,color:overloadLevel==='severe'?'#c53030':'#b7791f',marginBottom:8}}>
+              {overloadLevel==='severe'?'Strongly recommended to reschedule some tasks to stay productive.':'Consider rescheduling lower-priority tasks.'}
+            </div>
+            <button className="reschedule-btn" style={{background:overloadLevel==='severe'?'#c53030':'#ed8936'}} onClick={onReschedule}>
+              {overloadLevel==='severe'?'🔴 Reschedule now (strongly recommended)':'⚡ Reschedule overflow tasks'}
+            </button>
+          </div>
+        )}
+        {dayTasks.length===0&&<div className="empty"><div className="empty-icon">🎯</div><div className="empty-text">No tasks today. Add one!</div></div>}
+        {/* Timeframes */}
+        <TimeframeSection label="Morning" icon="🌅" tasks={morningTasks}/>
+        <TimeframeSection label="Afternoon" icon="☀️" tasks={afternoonTasks}/>
+        {flexTasks.length>0&&(
+          <div>
+            <div className="timeframe-hdr"><span>⏱ Just Duration — schedule as free time opens up</span></div>
+            {flexTasks.map(t=>(
+              <div key={t.id} style={{display:'flex',alignItems:'flex-start',gap:4}}>
+                <div style={{flex:1,minWidth:0}}><TaskRow t={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete}/></div>
+                <div style={{display:'flex',flexDirection:'column',gap:3,paddingTop:4,flexShrink:0,alignItems:'stretch',width:52}}>
+                  <TimeframeBtn task={t}/>
+                  <SwitchTop3Btn task={t}/>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+        {todoTasks.length===0&&doneTasks.length>0&&<div style={{fontSize:12,color:'#48bb78',fontWeight:600,textAlign:'center',padding:'6px 0'}}>🎉 All tasks done!</div>}
+        {doneTasks2.length>0&&<>
+          <div className="divider"/>
+          <div style={{fontSize:11,fontWeight:700,color:'#a0aec0',marginBottom:6}}>✓ DONE ({doneTasks2.length})</div>
+          {doneTasks2.map(t=><TaskRow key={t.id} t={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete}/>)}
+        </>}
+        <button className="btn btn-primary btn-sm" style={{marginTop:10}} onClick={()=>onAdd(today)}>+ Add Task</button>
+      </div>
+
+      {/* ── Next workday deadlines ── */}
+      {nextWorkDayDue.length>0&&(
+        <div className="card" style={{border:'1px solid #bee3f8',background:'#ebf8ff'}}>
+          <div className="card-title" style={{color:'#2b6cb0'}}>📌 Due {nwdLabel} — {fmtFull(nextWorkDay)}</div>
+          {nextWorkDayDue.map(t=>(
+            <div key={t.id} className="deadline-box">
+              <div className="deadline-num" style={{background:'#bee3f8',color:'#2b6cb0'}}>{diffDays(t.dueDate)}d</div>
+              <div className="suggestion-content">
+                <div className="suggestion-title">{t.title}</div>
+                <div className="suggestion-reason" style={{color:'#2b6cb0'}}>{t.priority} priority · {t.estimatedHours}h</div>
+              </div>
+              <div style={{display:'flex',flexDirection:'column',gap:4,alignItems:'flex-end'}}>
+                <button className="suggestion-add-btn" style={{background:'#3182ce'}} onClick={()=>onEdit({...t,scheduledDate:today})}>→ Today</button>
+                <SwitchTop3Btn task={t}/>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Near-deadline (2–5 days) ── */}
+      {nearDeadline.length>0&&(
+        <div className="card" style={{border:'1px solid #f6ad55',background:'#fffdf5'}}>
+          <div className="card-title" style={{color:'#b7791f'}}>⏰ Near Deadline — ends this week</div>
+          {nearDeadline.map(t=>(
+            <div key={t.id} className="deadline-box">
+              <div className="deadline-num">{diffDays(t.dueDate)+'d'}</div>
+              <div className="suggestion-content">
+                <div className="suggestion-title">{t.title}</div>
+                <div className="suggestion-reason" style={{color:'#b7791f'}}>Due {fmt(t.dueDate)} · {t.priority} priority · {t.estimatedHours}h</div>
+              </div>
+              <button className="suggestion-add-btn" style={{background:'#ed8936'}} onClick={()=>onEdit({...t,scheduledDate:today})}>→ Today</button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── Weekly link ── */}
+      <div style={{textAlign:'center',padding:'4px 0 8px'}}>
+        <button onClick={onGoWeekly} style={{background:'none',border:'none',color:'#667eea',fontSize:12,fontWeight:600,cursor:'pointer',textDecoration:'underline',padding:4}}>
+          📆 View further deadlines on weekly screen →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── WeeklyView ────────────────────────────────────────────────────────────────
+function WeeklyView({ tasks, weekOffset, onToggle, onEdit, onAdd }) {
+  const today = toISO(new Date());
+  const baseDate = new Date(); baseDate.setDate(baseDate.getDate() + weekOffset*7);
+  const weekDays = getWeekDays(toISO(baseDate));
+  const weekStart = fmt(weekDays[0]), weekEnd = fmt(weekDays[6]);
+  const weekTasks = tasks.filter(t=>weekDays.includes(t.scheduledDate));
+  const weekDone = weekTasks.filter(t=>t.status==='done').length;
+  const weekPct = weekTasks.length>0 ? Math.round(weekDone/weekTasks.length*100) : 0;
+
+  return (
+    <div>
+      <div className="card" style={{marginBottom:10}}>
+        <div style={{display:'flex',alignItems:'center',justifyContent:'space-between',marginBottom:8,flexWrap:'wrap',gap:8}}>
+          <div className="card-title" style={{marginBottom:0}}>📆 Week: {weekStart} – {weekEnd}</div>
+          <div style={{fontSize:12,color:'#718096'}}>{weekDone}/{weekTasks.length} done · {weekPct}%</div>
+        </div>
+        <div className="progress-bar"><div className="progress-fill" style={{width:weekPct+'%'}}/></div>
+      </div>
+      <div className="week-grid">
+        {weekDays.map(day=>{
+          const dayTasks = tasks.filter(t=>t.scheduledDate===day).sort((a,b)=>scoreTask(b)-scoreTask(a));
+          const isToday = day===today;
+          const d = new Date(day+'T00:00:00');
+          return (
+            <div key={day} className={'day-col'+(isToday?' today':'')}>
+              <div className="day-header">{DAYS[d.getDay()]}</div>
+              <div className="day-date">{d.getDate()}{isToday&&<span style={{fontSize:10,background:'#667eea',color:'white',borderRadius:8,padding:'1px 5px',marginLeft:4}}>today</span>}</div>
+              {(()=>{
+                const getH = t => {
+                  if(t.startTime) return parseInt(t.startTime.split(':')[0]);
+                  const m=t.title.match(/\((\d{2}):\d{2}/);
+                  if(m) return parseInt(m[1]);
+                  return null;
+                };
+                const morning = dayTasks.filter(t=>{ const h=getH(t); return h!==null&&h<12; }).sort((a,b)=>a.startTime>b.startTime?1:-1);
+                const afternoon = dayTasks.filter(t=>{ const h=getH(t); return h!==null&&h>=12; }).sort((a,b)=>a.startTime>b.startTime?1:-1);
+                const flex = dayTasks.filter(t=>getH(t)===null);
+                const MiniTask = ({t}) => (
+                  <div key={t.id} className={'day-task-mini mini-'+t.priority+(t.status==='done'?' mini-done':'')} title={t.title+(t.startTime?' ('+t.startTime+'–'+t.endTime+')':'')} onClick={()=>onEdit(t)}>
+                    {t.status==='done'?'✓ ':''}{t.startTime?t.startTime+' ':''}{t.title}
+                  </div>
+                );
+                return (<>
+                  {morning.length>0&&<><div className="week-tf-hdr">🌅 Morning</div>{morning.map(t=><MiniTask key={t.id} t={t}/>)}</>}
+                  {afternoon.length>0&&<><div className="week-tf-hdr">☀️ Afternoon</div>{afternoon.map(t=><MiniTask key={t.id} t={t}/>)}</>}
+                  {flex.length>0&&<><div className="week-tf-hdr">⏱ Flex</div>{flex.map(t=><MiniTask key={t.id} t={t}/>)}</>}
+                </>);
+              })()}
+              <button className="add-to-day-btn" onClick={()=>onAdd(day)}>+ Add</button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── AllTasksView ──────────────────────────────────────────────────────────────
+function AllTasksView({ tasks, onToggle, onEdit, onDelete, onAdd }) {
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterPri, setFilterPri] = useState('all');
+  const [filterCat, setFilterCat] = useState('all');
+  const [search, setSearch] = useState('');
+
+  const filtered = useMemo(()=>tasks.filter(t=>{
+    if(filterStatus!=='all'&&t.status!==filterStatus) return false;
+    if(filterPri!=='all'&&t.priority!==filterPri) return false;
+    if(filterCat!=='all'&&t.category!==filterCat) return false;
+    if(search&&!t.title.toLowerCase().includes(search.toLowerCase())) return false;
+    return true;
+  }).sort((a,b)=>scoreTask(b)-scoreTask(a)),[tasks,filterStatus,filterPri,filterCat,search]);
+
+  const hasFilter = filterStatus!=='all'||filterPri!=='all'||filterCat!=='all'||search;
+
+  // Split todo into routine vs non-routine
+  const isRoutineTask = t => !!(t.isRoutine||t.fromRoutineId);
+  const STATUS_GROUPS = [
+    {key:'todo_task',   label:'📋 To Do',         color:'#667eea', filter:t=>t.status==='todo'&&!isRoutineTask(t)},
+    {key:'todo_routine',label:'🔄 Routine Tasks',  color:'#9f7aea', filter:t=>t.status==='todo'&&isRoutineTask(t)},
+    {key:'in_progress', label:'⚡ In Progress',    color:'#ed8936', filter:t=>t.status==='in_progress'},
+    {key:'done',        label:'✓ Done',            color:'#48bb78', filter:t=>t.status==='done'},
+    {key:'cancelled',   label:'✕ Cancelled',       color:'#a0aec0', filter:t=>t.status==='cancelled'},
+  ];
+
+  const selStyle = {fontSize:12,padding:'5px 8px',borderRadius:8,border:'1px solid #e2e8f0',background:'white',color:'#4a5568',cursor:'pointer'};
+
+  return (
+    <div>
+      <div style={{marginBottom:10}}>
+        <div style={{fontSize:12,color:'#718096'}}>Your complete task backlog — find, review and manage every task in one place.</div>
+      </div>
+
+      {/* Single-row compact filter */}
+      <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10,alignItems:'center'}}>
+        <input className="form-input" style={{flex:1,minWidth:140,fontSize:12,padding:'5px 9px'}} placeholder="🔍 Search…" value={search} onChange={e=>setSearch(e.target.value)}/>
+        <select style={selStyle} value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+          <option value="all">All Status</option>
+          <option value="todo">To Do</option>
+          <option value="in_progress">In Progress</option>
+          <option value="done">Done</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+        <select style={selStyle} value={filterPri} onChange={e=>setFilterPri(e.target.value)}>
+          <option value="all">All Priority</option>
+          <option value="high">🔴 High</option>
+          <option value="medium">🟡 Medium</option>
+          <option value="low">🟢 Low</option>
+        </select>
+        <select style={selStyle} value={filterCat} onChange={e=>setFilterCat(e.target.value)}>
+          <option value="all">All Categories</option>
+          {CATEGORIES.map(c=><option key={c} value={c}>{c}</option>)}
+        </select>
+        {hasFilter&&<button style={{...selStyle,color:'#c53030',borderColor:'#fc8181'}} onClick={()=>{setFilterStatus('all');setFilterPri('all');setFilterCat('all');setSearch('');}}>✕ Clear</button>}
+        <button className="btn btn-primary btn-sm" onClick={()=>onAdd(null)}>+ New</button>
+      </div>
+
+      <div style={{fontSize:11,color:'#a0aec0',marginBottom:12}}>{filtered.length} task{filtered.length!==1?'s':''} {hasFilter?'matching filters':'total'}</div>
+
+      {filtered.length===0&&<div className="empty"><div className="empty-icon">🔍</div><div className="empty-text">No tasks match your filters.</div></div>}
+
+      {/* Grouped by status */}
+      {STATUS_GROUPS.map(({key,label,color,filter})=>{
+        const group = filtered.filter(filter);
+        if(!group.length) return null;
+        return (
+          <div key={key} style={{marginBottom:18}}>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:6}}>
+              <div style={{fontSize:12,fontWeight:700,color}}>{label}</div>
+              <div style={{fontSize:11,background:color+'22',color,borderRadius:10,padding:'1px 8px',fontWeight:700}}>{group.length}</div>
+              <div style={{flex:1,height:1,background:'#e2e8f0'}}/>
+            </div>
+            {group.map(t=><TaskRow key={t.id} t={t} onToggle={onToggle} onEdit={onEdit} onDelete={onDelete}/>)}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── ProgressView ──────────────────────────────────────────────────────────────
+function ProgressView({ tasks }) {
+  const today = toISO(new Date());
+  const weekDays = getWeekDays(today);
+  const weekData = weekDays.map(d=>({ day:DAYS[new Date(d+'T00:00:00').getDay()], total:tasks.filter(t=>t.scheduledDate===d).length, done:tasks.filter(t=>t.scheduledDate===d&&t.status==='done').length }));
+  return (
+    <div>
+      <div className="card">
+        <div className="card-title">📊 Long-term Gantt</div>
+        {(()=>{
+          const ganttTasks = tasks.filter(t=>
+            t.status!=='done'&&t.status!=='cancelled'&&t.dueDate&&diffDays(t.dueDate)>=3&&!t.isRoutine
+          ).sort((a,b)=>a.dueDate>b.dueDate?1:-1).slice(0,10);
+          if(!ganttTasks.length) return <div style={{fontSize:12,color:'#a0aec0'}}>No long-deadline tasks. Tasks due 3+ days away will appear here.</div>;
+          const minDate = today;
+          const maxDate = ganttTasks.reduce((mx,t)=>t.dueDate>mx?t.dueDate:mx, today);
+          const totalDays = Math.max(diffDays(maxDate)+2, 7);
+          const dayPct = d => Math.max(0, Math.min(100, (diffDays(d))/totalDays*100));
+          const axisDates = [];
+          for(let i=0;i<=totalDays;i+=Math.ceil(totalDays/6)){
+            const d=daysFromNow(i); axisDates.push({d,pct:i/totalDays*100,label:fmt(d)});
+          }
+          return (<>
+            <div className="gantt-axis" style={{height:16,position:'relative'}}>
+              {axisDates.map(({d,pct,label})=>(
+                <div key={d} style={{position:'absolute',left:pct+'%',fontSize:9,color:'#a0aec0',transform:'translateX(-50%)',whiteSpace:'nowrap'}}>{label}</div>
+              ))}
+            </div>
+            {ganttTasks.map(t=>{
+              const start = t.ganttStart||t.scheduledDate||today;
+              const startPct = dayPct(start);
+              const endPct = dayPct(t.dueDate);
+              const widthPct = Math.max(1, endPct-startPct);
+              const prioColor = t.priority==='high'?'#fc8181':t.priority==='medium'?'#f6ad55':'#68d391';
+              const daysLeft = diffDays(t.dueDate);
+              return (
+                <div key={t.id} className="gantt-row">
+                  <div className="gantt-label" title={t.title}>{t.title}</div>
+                  <div className="gantt-track" title={'Due '+fmt(t.dueDate)+' · '+daysLeft+'d left'}>
+                    <div className="gantt-bar" style={{left:startPct+'%',width:widthPct+'%',background:prioColor}}>
+                      {widthPct>12?daysLeft+'d left':''}
+                    </div>
+                    {/* today line */}
+                    <div className="gantt-today" style={{left:dayPct(today)+'%'}}/>
+                  </div>
+                  <div style={{fontSize:10,color:'#718096',flexShrink:0,width:36,textAlign:'right'}}>{daysLeft}d</div>
+                </div>
+              );
+            })}
+            <div style={{fontSize:10,color:'#a0aec0',marginTop:6,display:'flex',gap:12}}>
+              <span style={{display:'flex',alignItems:'center',gap:3}}><span style={{width:10,height:10,borderRadius:2,background:'#fc8181',display:'inline-block'}}/>High</span>
+              <span style={{display:'flex',alignItems:'center',gap:3}}><span style={{width:10,height:10,borderRadius:2,background:'#f6ad55',display:'inline-block'}}/>Medium</span>
+              <span style={{display:'flex',alignItems:'center',gap:3}}><span style={{width:10,height:10,borderRadius:2,background:'#68d391',display:'inline-block'}}/>Low</span>
+              <span style={{display:'flex',alignItems:'center',gap:3}}><span style={{width:2,height:12,background:'#667eea',display:'inline-block'}}/>Today</span>
+            </div>
+          </>);
+        })()}
+      </div>
+      <div className="card">
+        <div className="card-title">📅 This Week</div>
+        <div style={{display:'flex',gap:6,alignItems:'flex-end',height:80}}>
+          {weekData.map(({day,total:t,done:d})=>(
+            <div key={day} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3}}>
+              <div style={{width:'100%',position:'relative',height:60,display:'flex',alignItems:'flex-end'}}>
+                <div style={{width:'100%',background:'#e2e8f0',borderRadius:'4px 4px 0 0',height:t?Math.max(8,t/Math.max(...weekData.map(x=>x.total))*60)+'px':'8px'}}/>
+                <div style={{position:'absolute',bottom:0,width:'100%',background:'#667eea',borderRadius:'4px 4px 0 0',height:d?Math.max(4,d/Math.max(...weekData.map(x=>x.total),1)*60)+'px':'0'}}/>
+              </div>
+              <div style={{fontSize:10,color:'#718096',fontWeight:600}}>{day}</div>
+              <div style={{fontSize:10,color:'#4a5568'}}>{d}/{t}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── EmailCard ─────────────────────────────────────────────────────────────────
+function EmailCard({ email, onCreateTask, onMarkRead }) {
+  const catColor = email.category==='task'?'#c53030':email.category==='jira'?'#2b6cb0':'#276749';
+  const catBg = email.category==='task'?'#fff5f5':email.category==='jira'?'#ebf8ff':'#f0fff4';
+  return (
+    <div className={'email-card'+(email.taskCreated?' task-created-card':'')}>
+      <div className="email-from">
+        <span style={{background:catBg,color:catColor,padding:'1px 7px',borderRadius:10,fontWeight:700,fontSize:10,textTransform:'uppercase'}}>{email.category==='have_a_look'?'Have a look':email.category}</span>
+        {email.urgent&&<span style={{background:'#fff5f5',color:'#c53030',padding:'1px 7px',borderRadius:10,fontWeight:700,fontSize:10}}>🔥 URGENT</span>}
+        {email.isNew&&<span className="tag-email">NEW</span>}
+        <span style={{marginLeft:'auto'}}>{email.dateStr}</span>
+      </div>
+      <div className="email-subject">{email.subject}</div>
+      <div style={{fontSize:11,color:'#718096',marginBottom:2}}>{email.from} &lt;{email.fromEmail}&gt;</div>
+      <div className="email-snippet">{email.snippet}</div>
+      <div className="email-actions">
+        {email.category!=='have_a_look'&&!email.taskCreated&&<button className="btn btn-primary btn-sm" onClick={()=>onCreateTask(email)}>+ Create Task</button>}
+        {email.taskCreated&&<span style={{fontSize:12,color:'#48bb78',fontWeight:600}}>✓ Task created</span>}
+        <button className="btn btn-secondary btn-sm" onClick={()=>onMarkRead(email.id)}>Mark read</button>
+      </div>
+    </div>
+  );
+}
+
+// ── EmailsView ────────────────────────────────────────────────────────────────
+function EmailsView({ emails, syncStatus, lastSync, isDemoMode, gmailToken, emailSettings, onSync, onCreateTask, onMarkRead, onDemoMode, onOpenSettings, onGenTomorrow, tomorrowSuggestions }) {
+  const taskEmails = emails.filter(e=>e.category==='task');
+  const jiraEmails = emails.filter(e=>e.category==='jira');
+  const lookEmails = emails.filter(e=>e.category==='have_a_look');
+  const CHECK_TIMES = ['11:00','13:30','15:30'];
+  const SYNC_TIMES = [emailSettings.syncTime,'17:00'];
+  const allTimes = [...new Set([...SYNC_TIMES,...CHECK_TIMES])].sort();
+  const now = nowHHMM();
+  const connected = gmailToken||isDemoMode;
+  if(!connected) {
+    return (
+      <div className="card">
+        <div className="gmail-connect-box">
+          <div className="gmail-icon-big">📧</div>
+          <div className="modal-title" style={{marginBottom:8}}>Connect Gmail</div>
+          <div className="connect-desc">Connect your Gmail to auto-import tasks, Jira tickets, and important emails each morning. Scheduled checks at 11:00, 13:30, 15:30, and EOD at 17:10.</div>
+          <div className="setup-guide">
+            <div className="setup-guide-title">Quick Setup</div>
+            <div className="setup-step"><div className="step-num">1</div><div>Click <strong>Settings</strong> and enter your Google OAuth Client ID</div></div>
+            <div className="setup-step"><div className="step-num">2</div><div>Set your email address and preferred sync time</div></div>
+            <div className="setup-step"><div className="step-num">3</div><div>Click <strong>Connect Gmail</strong> to authorize</div></div>
+          </div>
+          <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+            <button className="btn btn-primary" onClick={onSync}>🔐 Connect Gmail</button>
+            <button className="btn btn-secondary" onClick={onOpenSettings}>⚙ Settings</button>
+            <button className="btn" style={{background:'#fffbeb',border:'1px solid #f6ad55',color:'#744210'}} onClick={onDemoMode}>🧪 Try Demo Mode</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div>
+      {isDemoMode&&<div className="demo-banner">🧪 <strong>Demo Mode</strong> — showing sample emails. <button className="btn btn-secondary btn-sm" style={{marginLeft:8}} onClick={onSync}>Connect real Gmail</button></div>}
+      <div className="sync-bar">
+        <div className={'sync-dot '+(syncStatus==='syncing'?'syncing':syncStatus==='error'?'error':'idle')}/>
+        <span style={{fontSize:12,fontWeight:600,color:'#4a5568'}}>{syncStatus==='syncing'?'Syncing…':syncStatus==='error'?'Sync error':'Ready'}</span>
+        {lastSync&&<span style={{fontSize:11,color:'#a0aec0'}}>Last sync: {lastSync}</span>}
+        <div style={{marginLeft:'auto',display:'flex',gap:6,flexWrap:'wrap'}}>
+          {allTimes.map(t=><span key={t} className={'sync-time-chip'+(t<=now?' past':'')}>{SYNC_TIMES.includes(t)?'🔄':t==='11:00'||t==='13:30'||t==='15:30'?'🔔':''} {t}</span>)}
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={()=>onSync(true)} disabled={syncStatus==='syncing'}>{syncStatus==='syncing'?'…':'↺ Sync'}</button>
+      </div>
+      {tomorrowSuggestions&&tomorrowSuggestions.length>0&&(
+        <div className="card" style={{marginBottom:14}}>
+          <div className="card-title">🌅 Tomorrow's Top 3 Suggestions</div>
+          {tomorrowSuggestions.map((t,i)=>(
+            <div key={t.id} className="suggestion-box">
+              <div className="suggestion-num">{i+1}</div>
+              <div className="suggestion-content">
+                <div className="suggestion-title">{t.title}</div>
+                <div className="suggestion-reason">Due {fmt(t.dueDate)} · {t.priority} priority · {t.estimatedHours}h</div>
+              </div>
+            </div>
+          ))}
+          <button className="btn btn-secondary btn-sm" style={{marginTop:8}} onClick={onGenTomorrow}>↻ Refresh</button>
+        </div>
+      )}
+      {emails.length===0&&<div className="empty"><div className="empty-icon">📭</div><div className="empty-text">No emails imported yet. Click Sync to fetch emails.</div></div>}
+      {taskEmails.length>0&&<div className="email-section">
+        <div className="email-section-header"><div className="email-section-title">📋 Tasks <span className="email-count-badge">{taskEmails.length}</span></div></div>
+        {taskEmails.map(e=><EmailCard key={e.id} email={e} onCreateTask={onCreateTask} onMarkRead={onMarkRead}/>)}
+      </div>}
+      {jiraEmails.length>0&&<div className="email-section">
+        <div className="email-section-header"><div className="email-section-title">🎫 Jira Tickets <span className="email-count-badge">{jiraEmails.length}</span></div></div>
+        {jiraEmails.map(e=><EmailCard key={e.id} email={e} onCreateTask={onCreateTask} onMarkRead={onMarkRead}/>)}
+      </div>}
+      {lookEmails.length>0&&<div className="email-section">
+        <div className="email-section-header"><div className="email-section-title">👀 Have a Look <span className="email-count-badge">{lookEmails.length}</span></div></div>
+        {lookEmails.map(e=><EmailCard key={e.id} email={e} onCreateTask={onCreateTask} onMarkRead={onMarkRead}/>)}
+      </div>}
+    </div>
+  );
+}
+
+// ── SettingsModal ─────────────────────────────────────────────────────────────
+function SettingsModal({ settings, onSave, onClose }) {
+  const [s, setS] = useState(settings);
+  function set(k,v){ setS(p=>({...p,[k]:v})); }
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal">
+        <div className="modal-title">⚙️ Settings</div>
+        <div className="warning-box">⚠️ You need a Google OAuth 2.0 Client ID for Gmail and Calendar. Create one at <strong>console.cloud.google.com</strong> → APIs & Services → Credentials. Enable Gmail API + Google Calendar API, and add your domain to authorized origins.</div>
+        <div className="form-group">
+          <label className="form-label">Google OAuth Client ID</label>
+          <input className="form-input" value={s.clientId} onChange={e=>set('clientId',e.target.value)} placeholder="your-id.apps.googleusercontent.com"/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Your Email Address</label>
+          <input className="form-input" type="email" value={s.userEmail} onChange={e=>set('userEmail',e.target.value)} placeholder="you@gmail.com"/>
+        </div>
+        <div style={{borderTop:'1px solid #e2e8f0',margin:'10px 0',paddingTop:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#4a5568',marginBottom:8}}>📧 Gmail</div>
+          <div className="form-group">
+            <label className="form-label">Morning Sync Time</label>
+            <input className="form-input" type="time" value={s.syncTime} onChange={e=>set('syncTime',e.target.value)}/>
+            <div style={{fontSize:11,color:'#a0aec0',marginTop:4}}>Daily checks also run at 11:00, 13:30, 15:30, and 17:10 (EOD)</div>
+          </div>
+        </div>
+        <div style={{borderTop:'1px solid #e2e8f0',margin:'10px 0',paddingTop:10}}>
+          <div style={{fontSize:12,fontWeight:700,color:'#4a5568',marginBottom:8}}>📅 Google Calendar</div>
+          <div className="form-group">
+            <label className="form-label">Sync Days Ahead</label>
+            <select className="form-input" value={s.calDaysAhead||14} onChange={e=>set('calDaysAhead',+e.target.value)}>
+              <option value={7}>7 days</option>
+              <option value={14}>14 days (default)</option>
+              <option value={30}>30 days</option>
+            </select>
+          </div>
+          <div className="form-group" style={{display:'flex',alignItems:'center',gap:8}}>
+            <input type="checkbox" id="calAutoSync" checked={s.calAutoSync!==false} onChange={e=>set('calAutoSync',e.target.checked)} style={{width:16,height:16}}/>
+            <label htmlFor="calAutoSync" style={{fontSize:13,color:'#4a5568',cursor:'pointer'}}>Auto-sync calendar on Gmail sync</label>
+          </div>
+        </div>
+        <div className="form-actions">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={()=>onSave(s)}>Save</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── AlertBanners ──────────────────────────────────────────────────────────────
+function AlertBanners({ alerts, onClose }) {
+  if(!alerts.length) return null;
+  return (
+    <div className="alerts-container">
+      {alerts.map(a=>(
+        <div key={a.id} className={'alert-banner '+a.type}>
+          <div className="alert-icon">{a.type==='urgent'?'🔥':a.type==='jira'?'🎫':a.type==='suggestion'?'💡':'✅'}</div>
+          <div className="alert-body"><div className="alert-title">{a.title}</div><div className="alert-text">{a.text}</div></div>
+          <button className="alert-close" onClick={()=>onClose(a.id)}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
+const SAMPLE_ROUTINES = [
+  {id:'r1',title:'Check emails',frequency:'daily',weekDays:[1,2,3,4,5],timeType:'range',startTime:'09:00',endTime:'09:30',duration:30,estimatedHours:0.5,priority:'high',mustDo:true,active:true},
+  {id:'r2',title:'Stand-up meeting',frequency:'daily',weekDays:[1,2,3,4,5],timeType:'range',startTime:'09:30',endTime:'10:00',duration:30,estimatedHours:0.5,priority:'high',mustDo:true,active:true},
+  {id:'r3',title:'Implement reconciliation',frequency:'weekly',weekDays:[1,3],timeType:'duration',startTime:'',endTime:'',duration:90,estimatedHours:1.5,priority:'medium',mustDo:false,active:true},
+  {id:'r4',title:'EOD report & wrap-up',frequency:'daily',weekDays:[1,2,3,4,5],timeType:'range',startTime:'17:00',endTime:'17:30',duration:30,estimatedHours:0.5,priority:'medium',mustDo:false,active:true},
+];
+
+// ── RoutineTaskForm ────────────────────────────────────────────────────────────
+const DAY_LABELS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+function RoutineTaskForm({ routine, onSave, onClose }) {
+  const [title, setTitle] = React.useState(routine?.title||'');
+  const [frequency, setFrequency] = React.useState(routine?.frequency||'daily');
+  const [weekDays, setWeekDays] = React.useState(routine?.weekDays||[1,2,3,4,5]);
+  const [timeType, setTimeType] = React.useState(routine?.timeType||'range');
+  const [startTime, setStartTime] = React.useState(routine?.startTime||'09:00');
+  const [endTime, setEndTime] = React.useState(routine?.endTime||'09:30');
+  const [duration, setDuration] = React.useState(routine?.duration||30);
+  const [priority, setPriority] = React.useState(routine?.priority||'medium');
+  const [mustDo, setMustDo] = React.useState(routine?.mustDo||false);
+  const [active, setActive] = React.useState(routine?.active!==false);
+  function toggleDay(d){ setWeekDays(p=>p.includes(d)?p.filter(x=>x!==d):[...p,d].sort()); }
+  function calcHours(){
+    if(timeType==='range'&&startTime&&endTime){
+      const [sh,sm]=startTime.split(':').map(Number);
+      const [eh,em]=endTime.split(':').map(Number);
+      return Math.max(0,(eh*60+em-sh*60-sm)/60);
+    }
+    return duration/60;
+  }
+  function save(){
+    if(!title.trim()) return;
+    const hrs=calcHours();
+    onSave({id:routine?.id||('r'+Date.now()),title:title.trim(),frequency,weekDays,timeType,startTime,endTime,duration:Math.round(duration),estimatedHours:Math.round(hrs*10)/10,priority,mustDo,active});
+  }
+  return (
+    <div className="modal-overlay" onClick={e=>{if(e.target===e.currentTarget)onClose();}}>
+      <div className="modal" style={{maxWidth:440}}>
+        <div className="modal-title">{routine?'Edit Routine':'New Routine Task'}</div>
+        <div className="form-group">
+          <label className="form-label">Task Name</label>
+          <input className="form-input" value={title} onChange={e=>setTitle(e.target.value)} placeholder="e.g. Check emails" autoFocus/>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Frequency</label>
+          <div style={{display:'flex',gap:8}}>
+            {['daily','weekly'].map(f=>(
+              <button key={f} onClick={()=>setFrequency(f)} className={'btn btn-sm '+(frequency===f?'btn-primary':'btn-secondary')} style={{flex:1}}>
+                {f==='daily'?'📅 Daily':'📆 Weekly'}
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">{frequency==='weekly'?'Repeat on days':'Active days'}</label>
+          <div style={{display:'flex',gap:5,marginTop:4}}>
+            {DAY_LABELS.map((d,i)=>(
+              <div key={i} className={'day-chip'+(weekDays.includes(i)?' selected':'')} onClick={()=>toggleDay(i)}>{d}</div>
+            ))}
+          </div>
+        </div>
+        <div className="form-group">
+          <label className="form-label">Time</label>
+          <div style={{display:'flex',gap:8,marginBottom:8}}>
+            <button onClick={()=>setTimeType('range')} className={'btn btn-sm '+(timeType==='range'?'btn-primary':'btn-secondary')} style={{flex:1}}>⏱ Specific time range</button>
+            <button onClick={()=>setTimeType('duration')} className={'btn btn-sm '+(timeType==='duration'?'btn-primary':'btn-secondary')} style={{flex:1}}>⏳ Just duration</button>
+          </div>
+          {timeType==='range'?(
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <input type="time" className="form-input" style={{flex:1}} value={startTime} onChange={e=>setStartTime(e.target.value)}/>
+              <span style={{color:'#718096',fontSize:13}}>→</span>
+              <input type="time" className="form-input" style={{flex:1}} value={endTime} onChange={e=>setEndTime(e.target.value)}/>
+            </div>
+          ):(
+            <div style={{display:'flex',alignItems:'center',gap:8}}>
+              <input type="number" className="form-input" style={{width:90}} value={duration} onChange={e=>setDuration(Math.max(5,+e.target.value))} min={5} step={5}/>
+              <span style={{color:'#718096',fontSize:13}}>minutes</span>
+              {duration>0&&<span style={{color:'#a0aec0',fontSize:11}}>≈ {(duration/60).toFixed(1)}h</span>}
+            </div>
+          )}
+        </div>
+        <div style={{display:'flex',gap:12}}>
+          <div className="form-group" style={{flex:1}}>
+            <label className="form-label">Importance</label>
+            <select className="form-input" value={priority} onChange={e=>setPriority(e.target.value)}>
+              <option value="high">🔴 High</option>
+              <option value="medium">🟡 Medium</option>
+              <option value="low">🟢 Low</option>
+            </select>
+          </div>
+          <div className="form-group" style={{flex:1}}>
+            <label className="form-label">Must Do</label>
+            <div style={{display:'flex',alignItems:'center',gap:8,marginTop:6}}>
+              <button className={'routine-toggle'+(mustDo?' on':'')} onClick={()=>setMustDo(p=>!p)}/>
+              <span style={{fontSize:12,color:mustDo?'#c53030':'#718096',fontWeight:600}}>{mustDo?'✓ Must Do':'Optional'}</span>
+            </div>
+          </div>
+        </div>
+        <div style={{fontSize:11,color:'#a0aec0',marginTop:-8,marginBottom:12}}>
+          Estimated: <strong>{calcHours()>=1?calcHours().toFixed(1)+'h':Math.round(calcHours()*60)+'min'}</strong> — counts toward daily 8h capacity.
+        </div>
+        <div className="form-actions">
+          <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
+          <button className="btn btn-primary" onClick={save} disabled={!title.trim()}>Save Routine</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── RoutineSetup view ──────────────────────────────────────────────────────────
+function RoutineSetup({ routines, onSave, onDelete, onToggle }) {
+  const [showForm, setShowForm] = React.useState(false);
+  const [editRoutine, setEditRoutine] = React.useState(null);
+  const today = new Date().getDay();
+  const priorityColor = {high:'#fc8181',medium:'#f6ad55',low:'#68d391'};
+  function todayApplies(r){ return r.active && r.weekDays.includes(today); }
+  function fmtTime(r){ return r.timeType==='range'&&r.startTime ? r.startTime+'–'+r.endTime : r.duration+'min'; }
+  function fmtDays(r){
+    if(r.weekDays.length===7) return 'Every day';
+    if(r.weekDays.length===5&&JSON.stringify(r.weekDays)===JSON.stringify([1,2,3,4,5])) return 'Weekdays (Mon–Fri)';
+    return r.weekDays.map(d=>DAY_LABELS[d]).join(', ');
+  }
+  function totalDailyH(){ return routines.filter(r=>r.active&&r.weekDays.includes(today)).reduce((a,r)=>a+(r.estimatedHours||0),0); }
+  const active=routines.filter(r=>r.active);
+  const inactive=routines.filter(r=>!r.active);
+  return (
+    <div>
+      <div className="card">
+        <div style={{display:'flex',alignItems:'center',marginBottom:14}}>
+          <div>
+            <div className="card-title" style={{marginBottom:2}}>⚙️ Routine Tasks</div>
+            <div style={{fontSize:12,color:'#718096'}}>Recurring tasks that feed your daily suggestions automatically.</div>
+          </div>
+          <button className="btn btn-primary btn-sm" style={{marginLeft:'auto',flexShrink:0}} onClick={()=>{setEditRoutine(null);setShowForm(true);}}>+ New Routine</button>
+        </div>
+        {routines.filter(r=>r.active&&r.weekDays.includes(today)).length>0&&(
+          <div style={{background:'#f0f4ff',borderRadius:8,padding:'8px 12px',marginBottom:12,fontSize:12,color:'#3730a3',display:'flex',gap:12,alignItems:'center'}}>
+            <span>📅 Today's routine load: <strong>{totalDailyH().toFixed(1)}h</strong></span>
+            <span style={{color:'#a5b4fc'}}>|</span>
+            <span>{routines.filter(r=>r.active&&r.weekDays.includes(today)&&r.mustDo).length} must-do · {routines.filter(r=>r.active&&r.weekDays.includes(today)&&!r.mustDo).length} optional</span>
+          </div>
+        )}
+        {active.length===0&&<div className="empty"><div className="empty-icon">🔄</div><div className="empty-text">No routines yet. Add your first recurring task!</div></div>}
+        {active.map(r=>(
+          <div key={r.id} className="routine-row">
+            <div className="routine-dot" style={{background:priorityColor[r.priority]||'#cbd5e0'}}/>
+            <div className="routine-info">
+              <div className="routine-title-text">
+                {r.mustDo&&<span className="routine-badge mustdo">Must Do</span>}
+                {r.title}
+              </div>
+              <div className="routine-meta">
+                <span className={'routine-badge rfreq-'+r.frequency}>{r.frequency==='daily'?'Daily':'Weekly'}</span>
+                {fmtDays(r)} · {fmtTime(r)} · {r.estimatedHours||+(r.duration/60).toFixed(1)}h
+                {todayApplies(r)&&<span style={{marginLeft:6,color:'#667eea',fontWeight:600,fontSize:10}}>● Today</span>}
+              </div>
+            </div>
+            <button className={'routine-toggle'+(r.active?' on':'')} onClick={()=>onToggle(r.id)} title={r.active?'Pause':'Enable'}/>
+            <button className="btn btn-secondary btn-sm" onClick={()=>{setEditRoutine(r);setShowForm(true);}}>Edit</button>
+            <button className="btn btn-sm" style={{background:'#fff5f5',color:'#c53030',border:'1px solid #fc8181'}} onClick={()=>{if(window.confirm('Remove "'+r.title+'"?'))onDelete(r.id);}}>✕</button>
+          </div>
+        ))}
+        {inactive.length>0&&(
+          <div style={{marginTop:12}}>
+            <div style={{fontSize:11,fontWeight:700,color:'#a0aec0',marginBottom:6,textTransform:'uppercase',letterSpacing:.5}}>Paused ({inactive.length})</div>
+            {inactive.map(r=>(
+              <div key={r.id} className="routine-row" style={{opacity:.5}}>
+                <div className="routine-dot" style={{background:'#cbd5e0'}}/>
+                <div className="routine-info">
+                  <div className="routine-title-text">{r.title}</div>
+                  <div className="routine-meta">{fmtDays(r)} · {fmtTime(r)}</div>
+                </div>
+                <button className={'routine-toggle'+(r.active?' on':'')} onClick={()=>onToggle(r.id)} title="Re-enable"/>
+                <button className="btn btn-secondary btn-sm" onClick={()=>{setEditRoutine(r);setShowForm(true);}}>Edit</button>
+                <button className="btn btn-sm" style={{background:'#fff5f5',color:'#c53030',border:'1px solid #fc8181'}} onClick={()=>{if(window.confirm('Remove "'+r.title+'"?'))onDelete(r.id);}}>✕</button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      <div className="card" style={{background:'linear-gradient(135deg,#f0f4ff,#faf5ff)',border:'1px solid #c3dafe'}}>
+        <div className="card-title" style={{color:'#3730a3',marginBottom:8}}>💡 How routines work</div>
+        <div style={{fontSize:12,color:'#4c51bf',lineHeight:1.7}}>
+          <div>• <strong>Must Do</strong> routines always surface at the top of your Daily Suggestions.</div>
+          <div>• Their duration counts toward your daily 8h capacity — so overload alerts stay accurate.</div>
+          <div>• If a routine is already in your schedule for today it won't appear as a reminder.</div>
+          <div>• <strong>Specific time range</strong> pins it to a slot. <strong>Just duration</strong> lets you schedule it whenever.</div>
+        </div>
+      </div>
+      {showForm&&<RoutineTaskForm routine={editRoutine} onSave={r=>{onSave(r);setShowForm(false);}} onClose={()=>setShowForm(false)}/>}
+    </div>
+  );
+}
+
+
+// ── TutorialView ──────────────────────────────────────────────────────────────
+const DECK_TEMPLATES = [
+  {id:'t1',emoji:'📧',color:'#667eea',label:'Morning email check',tag:'Focus',hint:'Scan your inbox, reply to urgent ones, flag the rest.',timeType:'range',startTime:'09:00',endTime:'09:30',duration:30,priority:'high',mustDo:true,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t2',emoji:'🗣️',color:'#48bb78',label:'Team stand-up',tag:'Meeting',hint:'Stay aligned. Share blockers before they become walls.',timeType:'range',startTime:'09:30',endTime:'10:00',duration:30,priority:'high',mustDo:true,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t3',emoji:'🧠',color:'#9f7aea',label:'Deep work block',tag:'Focus',hint:'Your sharpest hours. Protect them from meetings and pings.',timeType:'duration',startTime:'',endTime:'',duration:90,priority:'medium',mustDo:false,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t4',emoji:'🐛',color:'#fc8181',label:'Bug fix session',tag:'Dev',hint:'Knock out the top bug on your board before lunch.',timeType:'duration',startTime:'',endTime:'',duration:120,priority:'high',mustDo:false,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t5',emoji:'🎫',color:'#f6ad55',label:'Jira ticket triage',tag:'Dev',hint:'Review, estimate, and assign tickets while the day is fresh.',timeType:'range',startTime:'10:00',endTime:'10:30',duration:30,priority:'medium',mustDo:false,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t6',emoji:'📝',color:'#4299e1',label:'EOD wrap-up',tag:'Reflect',hint:'Log what you shipped, note blockers, prep tomorrow\'s list.',timeType:'range',startTime:'17:00',endTime:'17:30',duration:30,priority:'medium',mustDo:false,frequency:'daily',weekDays:[1,2,3,4,5]},
+  {id:'t7',emoji:'🍽️',color:'#ed8936',label:'Lunch break',tag:'Health',hint:'Step away from the screen. Your brain needs the reset.',timeType:'range',startTime:'12:00',endTime:'13:00',duration:60,priority:'low',mustDo:false,frequency:'daily',weekDays:[1,2,3,4,5,6,0]},
+  {id:'t8',emoji:'📊',color:'#38b2ac',label:'Weekly planning',tag:'Planning',hint:'Review last week, set goals, block the big three for this week.',timeType:'range',startTime:'09:00',endTime:'10:00',duration:60,priority:'medium',mustDo:false,frequency:'weekly',weekDays:[1]},
+];
+
+function buildRoutineFromTemplate(tpl) {
+  return {id:'r'+Date.now()+Math.random().toString(36).slice(2,6),title:tpl.label,frequency:tpl.frequency,weekDays:tpl.weekDays,timeType:tpl.timeType,startTime:tpl.startTime,endTime:tpl.endTime,duration:tpl.duration,estimatedHours:Math.round(tpl.duration/60*10)/10,priority:tpl.priority,mustDo:tpl.mustDo,active:true};
+}
+
+// ── SwipeCard: vertical portrait card ────────────────────────────────────────
+function SwipeCard({ tpl, zIndex, scale, offsetY, isTop, onLike, onNope }) {
+  // Use ref for drag so pointerUp always reads the latest value (avoids stale closure)
+  const dragRef = React.useRef({x:0,y:0,active:false,sx:0,sy:0});
+  const [dragVis, setDragVis] = React.useState({x:0,y:0,active:false}); // drives render
+  const [flying, setFlying] = React.useState(null);
+  const cardRef = React.useRef(null);
+
+  function pointerDown(cx,cy){
+    if(!isTop) return;
+    dragRef.current={x:0,y:0,active:true,sx:cx,sy:cy};
+    setDragVis({x:0,y:0,active:true});
+  }
+  function pointerMove(cx,cy){
+    const d=dragRef.current; if(!d.active) return;
+    const x=cx-d.sx, y=(cy-d.sy)*0.15;
+    dragRef.current={...d,x,y};
+    setDragVis({x,y,active:true});
+  }
+  function pointerUp(){
+    const d=dragRef.current; if(!d.active) return;
+    dragRef.current={...d,active:false};
+    setDragVis({x:0,y:0,active:false});
+    if(d.x>50) triggerFly('right');
+    else if(d.x<-50) triggerFly('left');
+  }
+  function triggerFly(dir){
+    setFlying(dir);
+    setTimeout(()=>{ dir==='right'?onLike():onNope(); },360);
+  }
+
+  // Attach touchmove as non-passive so preventDefault actually stops page scroll
+  React.useEffect(()=>{
+    const el=cardRef.current; if(!el) return;
+    function onTouchMove(e){
+      if(dragRef.current.active){ e.preventDefault(); pointerMove(e.touches[0].clientX,e.touches[0].clientY); }
+    }
+    el.addEventListener('touchmove',onTouchMove,{passive:false});
+    return ()=>el.removeEventListener('touchmove',onTouchMove);
+  },[isTop]);
+
+  const rot = dragVis.x * 0.06;
+  const likeOp = Math.min(1, Math.max(0, dragVis.x/60));
+  const nopeOp = Math.min(1, Math.max(0, -dragVis.x/60));
+
+  const wrapStyle = {
+    zIndex,
+    transform: flying==='right' ? 'translateX(170%) rotate(30deg)'
+             : flying==='left'  ? 'translateX(-170%) rotate(-30deg)'
+             : isTop && dragVis.active
+               ? `translateX(${dragVis.x}px) translateY(${dragVis.y}px) rotate(${rot}deg)`
+               : `scale(${scale}) translateY(${offsetY}px)`,
+    transition: flying ? 'transform .36s ease, opacity .36s ease'
+              : isTop && dragVis.active ? 'none' : 'transform .28s ease',
+    opacity: flying ? 0 : 1,
+    touchAction: 'none',
+    userSelect: 'none',
+    WebkitUserSelect: 'none',
+  };
+
+  const timeLabel = tpl.timeType==='range'&&tpl.startTime ? tpl.startTime+'–'+tpl.endTime : tpl.duration+' min';
+  const priColor = {high:'#fc8181',medium:'#f6ad55',low:'#68d391'}[tpl.priority];
+  const priLabel = {high:'High priority',medium:'Medium',low:'Flexible'}[tpl.priority];
+  // Lighter tint for hero bg
+  const heroGrad = `linear-gradient(160deg,${tpl.color}ee,${tpl.color}99)`;
+
+  return (
+    <div className="tinder-wrap" style={wrapStyle} ref={cardRef}
+      onMouseDown={e=>pointerDown(e.clientX,e.clientY)}
+      onMouseMove={e=>{ if(dragRef.current.active) pointerMove(e.clientX,e.clientY); }}
+      onMouseUp={pointerUp} onMouseLeave={pointerUp}
+      onTouchStart={e=>pointerDown(e.touches[0].clientX,e.touches[0].clientY)}
+      onTouchEnd={pointerUp}
+    >
+      <div className="tinder-c">
+        {/* Hero: coloured top with large emoji */}
+        <div className="tinder-c-hero" style={{background:heroGrad}}>
+          {isTop&&<>
+            <div className="tinder-badge like" style={{opacity:likeOp}}>MATCH ❤️</div>
+            <div className="tinder-badge nope" style={{opacity:nopeOp}}>PASS ✕</div>
+          </>}
+          <div style={{fontSize:64,lineHeight:1,filter:'drop-shadow(0 4px 8px rgba(0,0,0,.2))'}}>{tpl.emoji}</div>
+          <div style={{fontSize:10,fontWeight:800,color:'rgba(255,255,255,.85)',textTransform:'uppercase',letterSpacing:1.5,background:'rgba(0,0,0,.15)',padding:'2px 10px',borderRadius:20}}>{tpl.tag}</div>
+        </div>
+        {/* Body */}
+        <div className="tinder-c-body">
+          <div style={{fontSize:18,fontWeight:800,color:'#1a202c',marginBottom:6,lineHeight:1.2}}>{tpl.label}</div>
+          <div style={{fontSize:12,color:'#718096',marginBottom:14,lineHeight:1.5}}>{tpl.hint}</div>
+          <div style={{display:'flex',flexWrap:'wrap',gap:6}}>
+            <span style={{fontSize:11,fontWeight:600,padding:'4px 10px',borderRadius:20,background:'#edf2ff',color:'#3730a3'}}>⏱ {timeLabel}</span>
+            <span style={{fontSize:11,fontWeight:600,padding:'4px 10px',borderRadius:20,background:priColor+'22',color:priColor}}>{priLabel}</span>
+            {tpl.mustDo&&<span style={{fontSize:11,fontWeight:600,padding:'4px 10px',borderRadius:20,background:'#fff5f5',color:'#c53030'}}>Must Do</span>}
+            <span style={{fontSize:11,fontWeight:600,padding:'4px 10px',borderRadius:20,background:'#f0fff4',color:'#276749'}}>{tpl.frequency==='weekly'?'📅 Weekly':'📆 Weekdays'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── TutorialView ───────────────────────────────────────────────────────────────
+function TutorialView({ onSaveRoutine, onGoToRoutine }) {
+  const [phase, setPhase] = React.useState('welcome');
+  const [deckIdx, setDeckIdx] = React.useState(0);
+  const [liked, setLiked] = React.useState([]);    // array of DECK_TEMPLATES
+  const [formIdx, setFormIdx] = React.useState(0); // which liked card we're customising
+  const [saved, setSaved]  = React.useState([]);
+
+  const MAX_PICKS = 3;
+  const remaining = DECK_TEMPLATES.length - deckIdx;
+
+  function handleLike() {
+    const tpl = DECK_TEMPLATES[deckIdx];
+    const newLiked = [...liked, tpl];
+    setLiked(newLiked);
+    if(newLiked.length >= MAX_PICKS) { setTimeout(()=>{ setFormIdx(0); setPhase('customize'); }, 400); }
+    else setDeckIdx(i=>i+1);
+  }
+  function handleNope() {
+    const nextIdx = deckIdx+1;
+    setDeckIdx(nextIdx);
+    if(nextIdx >= DECK_TEMPLATES.length) {
+      setTimeout(()=>{ liked.length>0 ? (setFormIdx(0),setPhase('customize')) : setPhase('swim'); }, 400);
+    }
+  }
+  function handleSave(r) {
+    onSaveRoutine(r);
+    const newSaved=[...saved,r];
+    setSaved(newSaved);
+    if(formIdx+1 < liked.length) setFormIdx(i=>i+1);
+    else setPhase('complete');
+  }
+
+  // ── Welcome ────────────────────────────────────────────────────────────────
+  if(phase==='welcome') return (
+    <div className="card" style={{maxWidth:520,margin:'24px auto',textAlign:'center',padding:'32px 24px'}}>
+      <div style={{fontSize:64,marginBottom:12,display:'block',animation:'bounce 1.5s infinite'}}>🧁</div>
+      <div className="tut-title">Build your daily routine</div>
+      <div className="tut-sub">I'll show you task templates — swipe right to pick one, left to skip. Choose 3 and we'll set them up together.</div>
+      <div className="tut-choice-row">
+        <div className="tut-choice" onClick={()=>setPhase('swipe')}>
+          <span className="tut-choice-icon">🍰</span>
+          <div className="tut-choice-label">Eat the Cake</div>
+          <div className="tut-choice-desc">Swipe through templates and I'll guide you step by step.</div>
+        </div>
+        <div className="tut-choice" onClick={()=>onGoToRoutine()}>
+          <span className="tut-choice-icon">🏊</span>
+          <div className="tut-choice-label">Let me swim</div>
+          <div className="tut-choice-desc">Go straight to Routine Setup and create tasks your way.</div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // ── Swim alone ─────────────────────────────────────────────────────────────
+  if(phase==='swim') return (
+    <div className="card" style={{maxWidth:480,margin:'24px auto',textAlign:'center',padding:'36px 28px'}}>
+      <div style={{fontSize:56,marginBottom:14}}>🏊</div>
+      <div className="tut-title" style={{marginBottom:8}}>It seems you need to swim by yourself.</div>
+      <div style={{fontSize:15,color:'#718096',marginBottom:10,lineHeight:1.6}}>Let's dive in. Don't worry — you can find me as a swimming float anytime.</div>
+      <div style={{fontSize:13,color:'#a0aec0',marginBottom:24}}>Head to the Routine tab and add tasks at your own pace. I'll be right here.</div>
+      <div style={{display:'flex',gap:10,justifyContent:'center',flexWrap:'wrap'}}>
+        <button className="btn btn-secondary" onClick={()=>{setPhase('welcome');setDeckIdx(0);setLiked([]);setSaved([]);}}>↩ Try again</button>
+        <button className="btn btn-primary" onClick={onGoToRoutine}>🏃 Go to Routine Setup</button>
+      </div>
+    </div>
+  );
+
+  // ── Customize: open RoutineTaskForm for each liked card in sequence ─────────
+  if(phase==='customize') {
+    const tpl = liked[formIdx];
+    const prefill = buildRoutineFromTemplate(tpl);
+    return (
+      <div>
+        <div style={{textAlign:'center',padding:'20px 16px 4px'}}>
+          <div style={{fontSize:13,fontWeight:700,color:'#667eea',marginBottom:4}}>
+            Setting up {formIdx+1} of {liked.length} — {tpl.emoji} {tpl.label}
+          </div>
+          <div style={{fontSize:12,color:'#a0aec0'}}>Adjust anything you like, then save.</div>
+        </div>
+        <RoutineTaskForm
+          routine={prefill}
+          onSave={handleSave}
+          onClose={()=>setPhase('swim')}
+        />
+      </div>
+    );
+  }
+
+  // ── Complete ───────────────────────────────────────────────────────────────
+  if(phase==='complete') return (
+    <div className="card" style={{maxWidth:500,margin:'24px auto',textAlign:'center',padding:32}}>
+      <div style={{marginBottom:12}}>
+        <span className="confetti-char">🎉</span><span className="confetti-char">🎊</span><span className="confetti-char">✨</span>
+      </div>
+      <div className="tut-title" style={{marginBottom:6}}>You're all set!</div>
+      <div style={{fontSize:13,color:'#718096',marginBottom:20}}>Your routines are saved and will appear every day they apply.</div>
+      {saved.map((r,i)=>(
+        <div key={i} className="tut-saved-task">
+          <span style={{fontSize:20}}>{liked[i]?.emoji||'✅'}</span>
+          <div style={{flex:1,textAlign:'left'}}>
+            <div style={{fontSize:13,fontWeight:700,color:'#2d3748'}}>{r.title}</div>
+            <div style={{fontSize:11,color:'#718096'}}>{r.timeType==='range'&&r.startTime?r.startTime+'–'+r.endTime:r.duration+'min'} · {r.priority}{r.mustDo?' · Must Do':''}</div>
+          </div>
+          <span style={{color:'#48bb78',fontSize:18}}>✓</span>
+        </div>
+      ))}
+      <div style={{display:'flex',gap:10,justifyContent:'center',marginTop:20,flexWrap:'wrap'}}>
+        <button className="btn btn-secondary" onClick={()=>{setPhase('welcome');setDeckIdx(0);setLiked([]);setSaved([]);}}>↩ Start over</button>
+        <button className="btn btn-primary" onClick={onGoToRoutine}>⚙️ See all routines →</button>
+      </div>
+    </div>
+  );
+
+  // ── Swipe deck ─────────────────────────────────────────────────────────────
+  const visibleCards = DECK_TEMPLATES.slice(deckIdx, deckIdx+3);
+  // Per-card status for sidebar list
+  const likedIds = new Set(liked.map(t=>t.id));
+  return (
+    <div style={{maxWidth:480,margin:'0 auto',padding:'8px 12px 24px'}}>
+      {/* Pick counter */}
+      <div style={{textAlign:'center',marginBottom:10}}>
+        <div className="tinder-hearts">
+          {Array.from({length:MAX_PICKS}).map((_,i)=>(
+            <span key={i} style={{fontSize:22,opacity:i<liked.length?1:.18,transition:'opacity .3s'}}>❤️</span>
+          ))}
+        </div>
+        <div style={{fontSize:11,color:'#a0aec0'}}>
+          {liked.length<MAX_PICKS
+            ? `Pick ${MAX_PICKS-liked.length} more`
+            : 'Great picks! Setting them up…'}
+        </div>
+      </div>
+
+      {/* Side-by-side: card stack + list */}
+      <div className="tinder-scene">
+        {/* Left: card stack */}
+        <div className="tinder-left">
+          {/* Swipe hint banner */}
+          <div className="swipe-hint-banner" style={{width:'100%',boxSizing:'border-box'}}>
+            <span className="swipe-arrow left" style={{fontSize:22}}>👈</span>
+            <div style={{textAlign:'center'}}>
+              <div>skip &nbsp;<span style={{color:'#a0aec0',fontSize:10}}>or</span>&nbsp; pick ❤️</div>
+            </div>
+            <span className="swipe-arrow" style={{fontSize:22}}>👉</span>
+          </div>
+          {/* Progress bar */}
+          <div style={{width:'100%',height:4,background:'#e2e8f0',borderRadius:4,margin:'8px 0',overflow:'hidden'}}>
+            <div style={{height:'100%',width:(deckIdx/DECK_TEMPLATES.length*100)+'%',background:'linear-gradient(90deg,#667eea,#9f7aea)',borderRadius:4,transition:'width .4s'}}/>
+          </div>
+          <div style={{fontSize:10,color:'#a0aec0',alignSelf:'flex-end',marginBottom:4}}>{deckIdx+1} / {DECK_TEMPLATES.length}</div>
+          <div className="tinder-arena">
+            {deckIdx >= DECK_TEMPLATES.length
+              ? <div style={{textAlign:'center',color:'#a0aec0',fontSize:13,padding:32}}>Deck finished!</div>
+              : visibleCards.map((tpl,i)=>{
+                  const isTop = i===0;
+                  const scale = 1 - i*0.035;
+                  const offsetY = i*12;
+                  return (
+                    <SwipeCard key={tpl.id} tpl={tpl} zIndex={10-i} scale={scale} offsetY={offsetY}
+                      isTop={isTop} onLike={handleLike} onNope={handleNope}/>
+                  );
+                })
+            }
+          </div>
+          {/* Action buttons */}
+          {deckIdx < DECK_TEMPLATES.length && (
+            <div className="tinder-actions">
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                <button className="tinder-btn nope" onClick={handleNope} title="Skip">✕</button>
+                <div className="tinder-btn-label">Skip</div>
+              </div>
+              <div style={{textAlign:'center',fontSize:10,color:'#cbd5e0',lineHeight:1.6}}>swipe<br/>or click</div>
+              <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:4}}>
+                <button className="tinder-btn like" onClick={handleLike} title="Pick this">❤️</button>
+                <div className="tinder-btn-label">Pick</div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Right: full deck list */}
+        <div className="tinder-right">
+          <div style={{fontSize:10,fontWeight:800,color:'#667eea',textTransform:'uppercase',letterSpacing:.8,marginBottom:10,paddingBottom:6,borderBottom:'2px solid #e2e8f0'}}>📋 All Templates</div>
+          <div className="deck-list">
+            {DECK_TEMPLATES.map((t,i)=>{
+              const isActive = i===deckIdx;
+              const isLiked = likedIds.has(t.id);
+              const isSkipped = i<deckIdx && !isLiked;
+              const cls = 'deck-item'+(isActive?' active':isLiked?' liked':isSkipped?' skipped':'');
+              return (
+                <div key={t.id} className={cls}>
+                  <span className="deck-item-emoji">{t.emoji}</span>
+                  <span className="deck-item-name">{t.label}</span>
+                  <span className="deck-item-status">
+                    {isLiked?'❤️':isActive?'👆':isSkipped?'·':''}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ── App ───────────────────────────────────────────────────────────────────────
+function App() {
+  const today = toISO(new Date());
+  // ── localStorage helpers ──────────────────────────────────────────────────
+  function lsGet(key, fallback) { try { const v=localStorage.getItem(key); return v!==null?JSON.parse(v):fallback; } catch(e){ return fallback; } }
+  function lsSet(key, val) { try { localStorage.setItem(key, JSON.stringify(val)); } catch(e){} }
+
+  const [tasks, setTasks] = useState(()=>lsGet('tp_tasks', SAMPLE_TASKS));
+  const [view, setView] = useState('daily');
+  const [showForm, setShowForm] = useState(false);
+  const [editTask, setEditTask] = useState(null);
+  const [prefillDate, setPrefillDate] = useState(null);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [showReschedule, setShowReschedule] = useState(false);
+  const [gmailToken, setGmailToken] = useState(null);
+  const [emails, setEmails] = useState([]);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+  const [syncStatus, setSyncStatus] = useState('idle');
+  const [lastSync, setLastSync] = useState(null);
+  const [emailSettings, setEmailSettings] = useState(()=>lsGet('tp_settings', {clientId:'',userEmail:'',syncTime:'07:00',calDaysAhead:14,calAutoSync:true}));
+  const [showSettings, setShowSettings] = useState(false);
+  const [alerts, setAlerts] = useState([]);
+  const [tomorrowSuggestions, setTomorrowSuggestions] = useState([]);
+  const [top3, setTop3] = useState(()=>lsGet('tp_top3', {tasks:[null,null,null],forDate:null}));
+  const schedulerFired = useRef(new Set());
+  const [calendarToken, setCalendarToken] = useState(null);
+  const [calSyncStatus, setCalSyncStatus] = useState('idle');
+  const [routineTasks, setRoutineTasks] = useState(()=>lsGet('tp_routines', SAMPLE_ROUTINES));
+  const calSyncedIds = useRef(new Map());
+  const routineMatVersion = useRef(0);
+
+  // ── Persist to localStorage on every change ────────────────────────────────
+  useEffect(()=>{ lsSet('tp_tasks', tasks); }, [tasks]);
+  useEffect(()=>{ lsSet('tp_routines', routineTasks); }, [routineTasks]);
+  useEffect(()=>{ lsSet('tp_top3', top3); }, [top3]);
+  useEffect(()=>{ lsSet('tp_settings', emailSettings); }, [emailSettings]);
+
+  // Auto-materialize routines as real scheduled tasks for today + next 13 days
+  useEffect(()=>{
+    const ver = ++routineMatVersion.current;
+    const dates = Array.from({length:14},(_,i)=>daysFromNow(i));
+    setTasks(prev=>{
+      let next=[...prev];
+      dates.forEach(date=>{
+        const dow=new Date(date+'T00:00:00').getDay();
+        routineTasks.filter(r=>r.active&&r.weekDays.includes(dow)).forEach(r=>{
+          const exists=next.some(t=>t.fromRoutineId===r.id&&t.scheduledDate===date);
+          if(!exists){
+            const hrs=r.estimatedHours||(r.timeType==='range'&&r.startTime
+              ?(()=>{const[sh,sm]=r.startTime.split(':').map(Number);const[eh,em]=(r.endTime||r.startTime).split(':').map(Number);return Math.max(.25,(eh*60+em-sh*60-sm)/60);})()
+              :r.duration/60)||.5;
+            const startNote=r.timeType==='range'&&r.startTime?' ('+r.startTime+'–'+r.endTime+')':'';
+            next.push({
+              id:'rt_'+r.id+'_'+date,
+              title:r.title+startNote,
+              priority:r.priority,
+              status:'todo',
+              dueDate:date,
+              scheduledDate:date,
+              category:'Routine',
+              estimatedHours:Math.round(hrs*10)/10,
+              description:r.frequency==='weekly'?'Weekly routine':'Daily routine',
+              createdAt:Date.now(),
+              fromEmail:false,
+              fromRoutineId:r.id,
+              isRoutine:true,
+            });
+          }
+        });
+      });
+      return next;
+    });
+  },[routineTasks]);
+
+  function addAlert(type, title, text) {
+    const a={id:uid(),type,title,text};
+    setAlerts(p=>[...p.slice(-4),a]);
+    if('Notification' in window && Notification.permission==='granted') new Notification(title,{body:text,icon:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">📋</text></svg>'});
+  }
+
+  function toggleTask(id) { setTasks(p=>p.map(t=>t.id===id?{...t,status:t.status==='done'?'todo':'done'}:t)); }
+  function saveTask(task) { setTasks(p=>{const idx=p.findIndex(t=>t.id===task.id); return idx>=0?p.map(t=>t.id===task.id?task:t):[...p,task];}); setShowForm(false); setEditTask(null); setPrefillDate(null); }
+  function deleteTask(id) { if(confirm('Delete this task?')) setTasks(p=>p.filter(t=>t.id!==id)); }
+  function openAdd(date, prefill) { setPrefillDate(date||today); setEditTask(prefill?{...prefill,scheduledDate:date||today,dueDate:date||today,status:'todo',id:null}:null); setShowForm(true); }
+  function openEdit(task) { setEditTask(task); setPrefillDate(null); setShowForm(true); }
+
+  // Routine helpers
+  function saveRoutine(r){ setRoutineTasks(p=>{ const idx=p.findIndex(x=>x.id===r.id); return idx>=0?[...p.slice(0,idx),r,...p.slice(idx+1)]:[...p,r]; }); }
+  function deleteRoutine(id){ setRoutineTasks(p=>p.filter(r=>r.id!==id)); }
+  function toggleRoutine(id){ setRoutineTasks(p=>p.map(r=>r.id===id?{...r,active:!r.active}:r)); }
+  function todayRoutines(){ const dow=new Date().getDay(); return routineTasks.filter(r=>r.active&&r.weekDays.includes(dow)); }
+  function routineAlreadyScheduled(r){ return tasks.some(t=>t.scheduledDate===toISO(new Date())&&t.title===r.title&&t.status!=='done'); }
+
+  function buildTop3FromTasks(taskList) {
+    const tomorrow=daysFromNow(1);
+    const seen=new Set();
+    const candidates=[...taskList]
+      .filter(t=>t.status!=='done'&&(t.scheduledDate===today||t.scheduledDate===tomorrow||t.dueDate===today||t.dueDate===tomorrow))
+      .sort((a,b)=>scoreTask(b)-scoreTask(a))
+      .filter(t=>{ if(seen.has(t.id)) return false; seen.add(t.id); return true; });
+    return [candidates[0]||null, candidates[1]||null, candidates[2]||null];
+  }
+  function genTomorrowSuggestions() {
+    const tomorrow=daysFromNow(1);
+    const newTasks=buildTop3FromTasks(tasks);
+    setTomorrowSuggestions(newTasks.filter(Boolean));
+    setTop3({tasks:newTasks, forDate:tomorrow});
+    const nearDl=tasks.filter(t=>t.status!=='done'&&diffDays(t.dueDate)>=0&&diffDays(t.dueDate)<=5);
+    const extra=nearDl.length>0?' · ⏰ '+nearDl.length+' task'+(nearDl.length!==1?'s':'')+' due this week!':'';
+    addAlert('suggestion',"🌅 Top 3 for tomorrow ready","Tap daily view to review."+extra);
+  }
+  function switchTop3Slot(task, slot) { // slot 0/1/2
+    setTop3(p=>{
+      const t=[...(p.tasks||[null,null,null])]; t[slot]=task;
+      // If forDate not set yet (manual lock before 17:10), default to today
+      const forDate = p.forDate || toISO(new Date());
+      return {...p,tasks:t,forDate};
+    });
+  }
+
+  async function checkUrgent() {
+    const urgentEmails=emails.filter(e=>e.urgent&&e.isNew);
+    const jiraNew=emails.filter(e=>e.category==='jira'&&e.isNew);
+    if(urgentEmails.length) addAlert('urgent','🔥 Urgent Emails',urgentEmails.length+' urgent email(s) need attention!');
+    if(jiraNew.length) addAlert('jira','New Jira Tickets',jiraNew.length+' new Jira ticket(s) assigned or mentioning you.');
+  }
+
+  async function syncCalendar(tok) {
+    const token=tok||calendarToken;
+    if(!token) return;
+    setCalSyncStatus('syncing');
+    try {
+      const events=await fetchCalendarEvents(token, emailSettings.userEmail, emailSettings.calDaysAhead||14);
+      setTasks(prev=>{
+        let next=[...prev];
+        const newIds=new Set(events.map(e=>e.calEventId));
+        calSyncedIds.current.forEach((taskId,calEventId)=>{
+          if(!newIds.has(calEventId)) {
+            next=next.filter(t=>t.id!==taskId);
+            calSyncedIds.current.delete(calEventId);
+          }
+        });
+        events.forEach(ev=>{
+          const existingTaskId=calSyncedIds.current.get(ev.calEventId);
+          if(existingTaskId) {
+            const idx=next.findIndex(t=>t.id===existingTaskId);
+            if(idx>=0) next[idx]={...next[idx],title:ev.title,dueDate:ev.dueDate,scheduledDate:ev.scheduledDate,estimatedHours:ev.estimatedHours,description:ev.description,calUpdated:ev.calUpdated};
+          } else {
+            next.push(ev);
+            calSyncedIds.current.set(ev.calEventId,ev.id);
+          }
+        });
+        return next;
+      });
+      setCalSyncStatus('idle');
+      const oooCount=events.filter(e=>e.isOOO).length;
+      const meetCount=events.filter(e=>!e.isOOO).length;
+      addAlert('calendar','📅 Calendar synced',meetCount+' meeting'+(meetCount!==1?'s':'')+' + '+oooCount+' day'+(oooCount!==1?'s':'')+' off imported.');
+    } catch(e) { setCalSyncStatus('error'); addAlert('urgent','Calendar sync error',e.message); }
+  }
+
+  async function doSync(forceDemo, token, demoMode) {
+    const useDemo=demoMode??isDemoMode, tok=token??gmailToken;
+    setSyncStatus('syncing');
+    try {
+      if(useDemo) { setEmails(MOCK_EMAILS); }
+      else if(tok) {
+        const fetched=await fetchGmailEmails(tok, emailSettings.userEmail);
+        setEmails(fetched);
+      }
+      const now=new Date(); setLastSync(now.getHours()+':'+String(now.getMinutes()).padStart(2,'0'));
+      setSyncStatus('idle');
+      addAlert('info','Sync complete','Emails imported and categorized.');
+      if(calendarToken&&emailSettings.calAutoSync!==false) syncCalendar(calendarToken);
+    } catch(e) { setSyncStatus('error'); addAlert('urgent','Sync error',e.message); }
+  }
+
+  async function connectGmail() {
+    if(!emailSettings.clientId) { setShowSettings(true); return; }
+    try {
+      const tok=await new Promise((resolve,reject)=>{
+        const client=google.accounts.oauth2.initTokenClient({client_id:emailSettings.clientId,scope:'https://www.googleapis.com/auth/gmail.readonly',callback:r=>r.error?reject(new Error(r.error)):resolve(r.access_token)});
+        client.requestAccessToken();
+      });
+      setGmailToken(tok);
+      if(Notification.permission==='default') await Notification.requestPermission();
+      await doSync(false,tok,false);
+    } catch(e) { addAlert('urgent','Gmail Error',e.message); }
+  }
+
+  async function connectCalendar() {
+    if(!emailSettings.clientId) { setShowSettings(true); return; }
+    try {
+      const tok=await new Promise((resolve,reject)=>{
+        const client=google.accounts.oauth2.initTokenClient({
+          client_id:emailSettings.clientId,
+          scope:'https://www.googleapis.com/auth/calendar.readonly',
+          callback:r=>r.error?reject(new Error(r.error)):resolve(r.access_token)
+        });
+        client.requestAccessToken();
+      });
+      setCalendarToken(tok);
+      if(Notification.permission==='default') await Notification.requestPermission();
+      await syncCalendar(tok);
+    } catch(e) { addAlert('urgent','Calendar Error',e.message); }
+  }
+
+  function handleSync(force) {
+    if(isDemoMode||!gmailToken) { if(gmailToken||isDemoMode) doSync(); else connectGmail(); }
+    else doSync();
+  }
+
+  function enableDemoMode() { setIsDemoMode(true); doSync(true,null,true); }
+
+  function createTaskFromEmail(email) {
+    const isPriHigh=email.urgent||email.category==='task';
+    const newTask={id:uid(),title:email.subject.replace(/^\[.*?\]\s*/,''),priority:isPriHigh?'high':'medium',
+      status:'todo',dueDate:today,scheduledDate:today,category:email.category==='jira'?'Jira':'Other',
+      estimatedHours:1,description:'From: '+email.from+'\n\n'+email.snippet,fromEmail:true,createdAt:Date.now()};
+    setTasks(p=>[...p,newTask]);
+    setEmails(p=>p.map(e=>e.id===email.id?{...e,taskCreated:true}:e));
+    addAlert('info','Task created','"'+newTask.title+'" added to your tasks.');
+  }
+
+  function markEmailRead(id) { setEmails(p=>p.filter(e=>e.id!==id)); }
+
+  useEffect(()=>{
+    const SYNC=[emailSettings.syncTime,'17:10'];
+    const CHECK=['11:00','13:30','15:30'];
+    const ALL=[...new Set([...SYNC,...CHECK])];
+    const interval=setInterval(()=>{
+      if(!gmailToken&&!isDemoMode) return;
+      const ts=nowHHMM();
+      const key=today+'_'+ts;
+      if(schedulerFired.current.has(key)||!ALL.includes(ts)) return;
+      schedulerFired.current.add(key);
+      if(ts==='17:10') { doSync(); genTomorrowSuggestions(); }
+      else if(SYNC.includes(ts)) doSync();
+      else checkUrgent();
+    },30000);
+    return ()=>clearInterval(interval);
+  },[gmailToken,isDemoMode,emailSettings.syncTime,emails,tasks]);
+
+  const todayTaskCount=tasks.filter(t=>t.scheduledDate===today&&t.status!=='done').length;
+  const overdueCount=tasks.filter(t=>t.status!=='done'&&diffDays(t.dueDate)<0).length;
+
+  return (
+    <div className="app">
+      <AlertBanners alerts={alerts} onClose={id=>setAlerts(p=>p.filter(a=>a.id!==id))}/>
+      {showForm&&<TaskForm onSave={saveTask} onClose={()=>{setShowForm(false);setEditTask(null);setPrefillDate(null);}} initial={editTask} prefillDate={prefillDate}/>}
+      {showReschedule&&<RescheduleModal tasks={tasks} onReschedule={t=>{setTasks(t);setShowReschedule(false);}} onClose={()=>setShowReschedule(false)}/>}
+      {showSettings&&<SettingsModal settings={emailSettings} onSave={s=>{setEmailSettings(s);setShowSettings(false);}} onClose={()=>setShowSettings(false)}/>}
+      <div className="header">
+        <div>
+          <div className="header h1">📋 Work Task Planner</div>
+          <div className="header-date">{fmtFull(today)}</div>
+        </div>
+        <div className="header-right">
+          {todayTaskCount>0&&<div className="header-badge">📅 {todayTaskCount} today</div>}
+          {overdueCount>0&&<div className="header-badge" style={{background:'rgba(252,129,129,.3)'}}>⚠ {overdueCount} overdue</div>}
+          {(gmailToken||isDemoMode)&&<div className="header-badge gmail-status">✉ {isDemoMode?'Demo':'Gmail'}</div>}
+          {calendarToken&&<div className="header-badge cal-status">📅 Calendar{calSyncStatus==='syncing'?'…':''}</div>}
+          <button className="btn btn-gmail btn-sm" onClick={()=>setShowReschedule(true)}>⚡ Overload</button>
+        </div>
+      </div>
+      <nav className="nav">
+        {[['daily','🏠 Daily'],['weekly','📅 Weekly'],['all','📋 All Tasks'],['progress','📊 Progress'],['emails','✉ Emails'],['routine','🔩 Routine'],['tutorial','📔 Tutorial']].map(([v,label])=>(
+          <button key={v} className={'nav-btn'+(view===v?' active':'')} onClick={()=>setView(v)}>
+            {label}{v==='emails'&&emails.filter(e=>e.isNew).length>0&&<span style={{marginLeft:4,background:'#fc8181',color:'white',borderRadius:8,padding:'0 5px',fontSize:10,fontWeight:700}}>{emails.filter(e=>e.isNew).length}</span>}
+          </button>
+        ))}
+        {view==='weekly'&&(
+          <div style={{marginLeft:'auto',display:'flex',gap:4,alignItems:'center',padding:'4px 0'}}>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setWeekOffset(p=>p-1)}>‹</button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setWeekOffset(0)}>Today</button>
+            <button className="btn btn-secondary btn-sm" onClick={()=>setWeekOffset(p=>p+1)}>›</button>
+          </div>
+        )}
+      </nav>
+      <main className="main">
+        {view==='daily'&&<DailyView tasks={tasks} routines={routineTasks} onToggle={toggleTask} onEdit={openEdit} onDelete={deleteTask} onAdd={openAdd} onReschedule={()=>setShowReschedule(true)} onAddRoutine={r=>openAdd(toISO(new Date()),{title:r.title,estimatedHours:r.estimatedHours||+(r.duration/60).toFixed(1),priority:r.priority,startTime:r.timeType==='range'?r.startTime:'',endTime:r.timeType==='range'?r.endTime:''})} onGoWeekly={()=>setView('weekly')} onSaveTask={task=>{setTasks(p=>{const i=p.findIndex(x=>x.id===task.id);return i>=0?p.map(x=>x.id===task.id?task:x):[...p,task];});}} top3={top3} onSwitchTop3={switchTop3Slot}/>}
+        {view==='weekly'&&<WeeklyView tasks={tasks} weekOffset={weekOffset} onToggle={toggleTask} onEdit={openEdit} onAdd={openAdd}/>}
+        {view==='all'&&<AllTasksView tasks={tasks} onToggle={toggleTask} onEdit={openEdit} onDelete={deleteTask} onAdd={openAdd}/>}
+        {view==='progress'&&<ProgressView tasks={tasks}/>}
+        {view==='routine'&&<RoutineSetup routines={routineTasks} onSave={saveRoutine} onDelete={deleteRoutine} onToggle={toggleRoutine}/>}
+        {view==='tutorial'&&<TutorialView onSaveRoutine={saveRoutine} onGoToRoutine={()=>setView('routine')}/>}
+        {view==='emails'&&<EmailsView emails={emails} syncStatus={syncStatus} lastSync={lastSync} isDemoMode={isDemoMode} gmailToken={gmailToken} emailSettings={emailSettings} onSync={handleSync} onCreateTask={createTaskFromEmail} onMarkRead={markEmailRead} onDemoMode={enableDemoMode} onOpenSettings={()=>setShowSettings(true)} onGenTomorrow={genTomorrowSuggestions} tomorrowSuggestions={tomorrowSuggestions}/>}
+      </main>
+      {(view==='daily'||view==='all')&&<button className="fab" onClick={()=>openAdd(null)} title="Add Task">＋</button>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
